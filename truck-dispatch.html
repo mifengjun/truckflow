@@ -250,6 +250,18 @@
       <h1>卡派系统</h1>
       <p>Truck Dispatch System · 卡车派送管理平台</p>
     </div>
+    <div style="display:flex;gap:10px;margin-bottom:18px;">
+      <label class="role-card active" onclick="selectRole(this)" style="flex:1;border:2px solid #667eea;background:#eef2ff;padding:12px;border-radius:8px;cursor:pointer;text-align:center;">
+        <input type="radio" name="loginRole" value="admin" checked style="display:none;">
+        <div style="font-weight:600;font-size:14px;">🏢 管理端</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">内部运营使用</div>
+      </label>
+      <label class="role-card" onclick="selectRole(this)" style="flex:1;border:2px solid #e5e7eb;padding:12px;border-radius:8px;cursor:pointer;text-align:center;">
+        <input type="radio" name="loginRole" value="client" style="display:none;">
+        <div style="font-weight:600;font-size:14px;">👤 客户端</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">客户自助使用</div>
+      </label>
+    </div>
     <div class="form-group">
       <label>邮箱账号</label>
       <input type="email" id="loginEmail" value="ops@company.com" placeholder="开户时提供的邮箱">
@@ -314,6 +326,17 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="rechargeModal">
+  <div class="modal">
+    <div class="modal-header">账户充值</div>
+    <div class="modal-body" id="rechargeBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="document.getElementById('rechargeModal').classList.remove('active')">取消</button>
+      <button class="btn btn-primary" onclick="submitRecharge()">确认充值</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -342,21 +365,101 @@ const ADDRESS_BOOK = [
   { name: 'John Smith (住宅)', type: '住宅地址', address: '456 Oak Ave, Pasadena, CA 91101', phone: '+1 626-555-0199' },
 ];
 
-let currentView = 'inquiry';
-let selectedQuote = null;
+let currentRole = 'admin'; // admin=管理端, client=客户端
+
+const INQUIRY_RECORDS = [
+  { id: 'IQ20260926003', status: 'quoted', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:400, time:'2026-09-26 13:20' },
+  { id: 'IQ20260926002', status: 'ordered', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:385, time:'2026-09-26 09:10', orderNo:'TK20260926001' },
+  { id: 'IQ20260925005', status: 'expired', from: 'YQN-NY仓', to: 'Amazon EWR4', mode:'LTL', pallets:3, goods:'厨房刀具套装×100', carrier:'YQN-Transport', price:520, time:'2026-09-25 14:00' },
+  { id: 'IQ20260924008', status: 'quoted', from: '外部仓-CA', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'智能台灯×30', carrier:'FedEx Freight', price:458, time:'2026-09-24 16:20' },
+];
+
+const WALLET = {
+  balance: 12580.50,
+  frozen: 680.00,
+  currency: 'USD',
+  bills: [
+    { id:'BILL-C001', period:'2026-09', amount:4320.00, status:'paid', time:'2026-09-25' },
+    { id:'BILL-C002', period:'2026-08', amount:3850.00, status:'paid', time:'2026-08-28' },
+    { id:'BILL-C003', period:'2026-07', amount:5120.00, status:'paid', time:'2026-07-30' },
+  ],
+  transactions: [
+    { id:'TX001', type:'recharge', amount:5000, balance:12580.50, time:'2026-09-20 10:15', remark:'银行转账充值' },
+    { id:'TX002', type:'consume', amount:-385, balance:7580.50, time:'2026-09-26 09:15', remark:'卡车单 TK20260926001 扣费' },
+    { id:'TX003', type:'consume', amount:-412, balance:7965.50, time:'2026-09-26 10:30', remark:'卡车单 TK20260926002 扣费' },
+    { id:'TX004', type:'recharge', amount:3000, balance:8377.50, time:'2026-09-15 14:00', remark:'在线充值' },
+    { id:'TX005', type:'refund', amount:120, balance:5377.50, time:'2026-09-12 09:30', remark:'订单异常退款' },
+  ],
+};
 
 /* ============ Auth ============ */
 function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pwd = document.getElementById('loginPwd').value;
   if (!email || !pwd) { toast('请输入账号和密码'); return; }
+  currentRole = document.querySelector('input[name="loginRole"]:checked')?.value || 'admin';
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('app').classList.add('active');
-  showView('inquiry');
+  renderSidebar();
+  showView(currentRole === 'admin' ? 'inquiry' : 'client-inquiry');
 }
 function logout() {
   document.getElementById('app').classList.remove('active');
   document.getElementById('loginPage').style.display = 'flex';
+}
+
+function selectRole(el) {
+  document.querySelectorAll('.role-card').forEach(c => {
+    c.style.borderColor = '#e5e7eb';
+    c.style.background = '#fff';
+    c.querySelector('input').checked = false;
+  });
+  el.style.borderColor = '#667eea';
+  el.style.background = '#eef2ff';
+  el.querySelector('input').checked = true;
+}
+
+function renderSidebar() {
+  const nav = document.querySelector('.sidebar-menu');
+  let html = '';
+  if (currentRole === 'admin') {
+    html = `
+      <div class="menu-group">物流</div>
+      <div class="menu-item active" data-view="inquiry"><span class="icon">📋</span>卡派询价</div>
+      <div class="menu-item" data-view="inquiry-records"><span class="icon">📑</span>询价记录</div>
+      <div class="menu-item" data-view="orders"><span class="icon">📦</span>卡派订单</div>
+      <div class="menu-item" data-view="tracking"><span class="icon">📍</span>物流跟踪</div>
+      <div class="menu-group">基础数据</div>
+      <div class="menu-item" data-view="addressbook"><span class="icon">📒</span>地址簿</div>
+      <div class="menu-item" data-view="carriers"><span class="icon">🚛</span>卡司管理</div>
+      <div class="menu-group">运营</div>
+      <div class="menu-item" data-view="billing"><span class="icon">💰</span>费用结算</div>
+      <div class="menu-item" data-view="dashboard"><span class="icon">📊</span>数据看板</div>
+      <div class="menu-item" data-view="claims"><span class="icon">⚠️</span>异常售后</div>
+      <div class="menu-group">系统</div>
+      <div class="menu-item" onclick="logout()"><span class="icon">🚪</span>退出登录</div>`;
+  } else {
+    html = `
+      <div class="menu-group">我的业务</div>
+      <div class="menu-item active" data-view="client-inquiry"><span class="icon">📋</span>我要询价</div>
+      <div class="menu-item" data-view="client-inquiry-records"><span class="icon">📑</span>询价记录</div>
+      <div class="menu-item" data-view="client-orders"><span class="icon">📦</span>我的订单</div>
+      <div class="menu-item" data-view="tracking"><span class="icon">📍</span>物流跟踪</div>
+      <div class="menu-group">资金</div>
+      <div class="menu-item" data-view="wallet"><span class="icon">💳</span>资金账户</div>
+      <div class="menu-group">基础</div>
+      <div class="menu-item" data-view="addressbook"><span class="icon">📒</span>地址簿</div>
+      <div class="menu-group">系统</div>
+      <div class="menu-item" onclick="logout()"><span class="icon">🚪</span>退出登录</div>`;
+  }
+  nav.innerHTML = html;
+  nav.querySelectorAll('.menu-item[data-view]').forEach(item => {
+    item.addEventListener('click', () => {
+      nav.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      showView(item.dataset.view);
+    });
+  });
 }
 
 /* ============ Navigation ============ */
@@ -368,12 +471,30 @@ document.querySelectorAll('.menu-item[data-view]').forEach(item => {
   });
 });
 
+let currentView = 'inquiry';
 function showView(view) {
   currentView = view;
-  const titles = { inquiry: '卡派询价', orders: '卡派订单', tracking: '物流跟踪', detail: '订单详情', addressbook: '地址簿', carriers: '卡司管理', billing: '费用结算', dashboard: '数据看板', claims: '异常售后' };
+  const titles = {
+    inquiry: '卡派询价', 'inquiry-records': '询价记录',
+    orders: '卡派订单', tracking: '物流跟踪', detail: '订单详情',
+    addressbook: '地址簿', carriers: '卡司管理',
+    billing: '费用结算', dashboard: '数据看板', claims: '异常售后',
+    'client-inquiry': '我要询价', 'client-inquiry-records': '我的询价',
+    'client-orders': '我的订单', wallet: '资金账户',
+  };
   document.getElementById('bcTitle').textContent = titles[view] || '';
   const content = document.getElementById('content');
-  const renderers = { inquiry: renderInquiry, orders: renderOrders, detail: () => renderDetail(currentOrderId), tracking: renderTracking, addressbook: renderAddressBook, carriers: renderCarriers, billing: renderBilling, dashboard: renderDashboard, claims: renderClaims };
+  const renderers = {
+    inquiry: renderInquiry, 'inquiry-records': renderInquiryRecords,
+    orders: renderOrders, detail: () => renderDetail(currentOrderId),
+    tracking: renderTracking, addressbook: renderAddressBook,
+    carriers: renderCarriers, billing: renderBilling,
+    dashboard: renderDashboard, claims: renderClaims,
+    'client-inquiry': renderClientInquiry,
+    'client-inquiry-records': renderClientInquiryRecords,
+    'client-orders': renderClientOrders,
+    wallet: renderWallet,
+  };
   content.innerHTML = (renderers[view] || (() => ''))();
   bindInquiryEvents();
 }
@@ -729,9 +850,11 @@ function submitOrder() {
   });
   toast('下单成功！请等待 5 分钟后到卡车单列表查看');
   setTimeout(() => {
+    const ordersView = currentRole === 'admin' ? 'orders' : 'client-orders';
     document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-    document.querySelector('.menu-item[data-view="orders"]').classList.add('active');
-    showView('orders');
+    const target = document.querySelector(`.menu-item[data-view="${ordersView}"]`);
+    if (target) target.classList.add('active');
+    showView(ordersView);
   }, 1200);
 }
 
@@ -819,7 +942,7 @@ function renderDetail(id) {
   ];
 
   return `
-  <button class="btn btn-default btn-sm" onclick="showView('orders')" style="margin-bottom:16px;">← 返回列表</button>
+  <button class="btn btn-default btn-sm" onclick="showView('${currentRole === 'admin' ? 'orders' : 'client-orders'}')" style="margin-bottom:16px;">← 返回列表</button>
   <div class="detail-header">
     <div>
       <div class="detail-title">卡车单 ${o.id}</div>
@@ -1098,6 +1221,289 @@ function renderClaims() {
     </div>
   </div>
   `;
+}
+
+/* ============ Admin Inquiry Records ============ */
+let irStatus = 'all';
+function renderInquiryRecords() {
+  const stMap = { quoted: '已报价', ordered: '已下单', expired: '已过期' };
+  const stClass = { quoted: 'st-pickup', ordered: 'st-delivered', expired: 'st-failed' };
+  const statuses = [
+    { key: 'all', label: '全部' },
+    { key: 'quoted', label: '已报价' },
+    { key: 'ordered', label: '已下单' },
+    { key: 'expired', label: '已过期' },
+  ];
+  const counts = {};
+  statuses.forEach(s => counts[s.key] = INQUIRY_RECORDS.filter(r => s.key === 'all' || r.status === s.key).length);
+  const list = irStatus === 'all' ? INQUIRY_RECORDS : INQUIRY_RECORDS.filter(r => r.status === irStatus);
+
+  return `
+  <h1 class="page-title">询价记录</h1>
+  <p class="page-desc">所有客户询价记录，可按状态筛选并查看关联订单</p>
+
+  <div class="status-tabs">
+    ${statuses.map(s => `<div class="status-tab ${irStatus===s.key?'active':''}" onclick="filterIR('${s.key}')">${s.label}<span class="count">${counts[s.key]}</span></div>`).join('')}
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <input placeholder="搜索询价单号 / 收发货地址 / 卡司">
+      <input type="date" class="form-input" style="width:auto;">
+    </div>
+    <div><button class="btn btn-default btn-sm">导出</button></div>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>询价单号</th><th>状态</th><th>提货</th><th>目的地</th><th>方式</th><th>托盘</th><th>商品</th><th>卡司</th><th>报价</th><th>询价时间</th><th>操作</th></tr></thead>
+    <tbody>
+      ${list.map(r => `
+        <tr>
+          <td style="color:#667eea;font-weight:500;">${r.id}</td>
+          <td><span class="status-pill ${stClass[r.status]}">${stMap[r.status]}</span></td>
+          <td>${r.from}</td>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.to}</td>
+          <td><span class="tag">${r.mode}</span></td>
+          <td>${r.pallets}</td>
+          <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.goods}</td>
+          <td>${r.carrier}</td>
+          <td style="color:#ef4444;font-weight:600;">$${r.price}</td>
+          <td style="color:#6b7280;font-size:12px;">${r.time}</td>
+          <td>
+            ${r.orderNo ? `<span class="btn-ghost" onclick="openDetail('${r.orderNo}')">查看订单</span>` : `<span class="btn-ghost" onclick="toast('重新询价')">重询价</span>`}
+          </td>
+        </tr>
+      `).join('')}
+      ${list.length === 0 ? `<tr><td colspan="11"><div class="empty-state"><div class="icon">📭</div>暂无询价记录</div></td></tr>` : ''}
+    </tbody>
+  </table>
+  `;
+}
+function filterIR(s) { irStatus = s; showView('inquiry-records'); }
+
+/* ============ Client Inquiry ============ */
+function renderClientInquiry() {
+  return renderInquiry().replace(
+    '<h1 class="page-title">卡派询价</h1>\n  <p class="page-desc">支持 YQN 仓及其他海外仓提货，Business / Residential 派送，LTL/FTL/PTL 运输方式</p>',
+    '<h1 class="page-title">我要询价</h1>\n  <p class="page-desc">填写收发货信息与商品，快速获取多家卡司报价</p>'
+  );
+}
+
+/* ============ Client Inquiry Records ============ */
+let cirStatus = 'all';
+function renderClientInquiryRecords() {
+  const stMap = { quoted: '已报价', ordered: '已下单', expired: '已过期' };
+  const stClass = { quoted: 'st-pickup', ordered: 'st-delivered', expired: 'st-failed' };
+  const statuses = [
+    { key: 'all', label: '全部' },
+    { key: 'quoted', label: '已报价' },
+    { key: 'ordered', label: '已下单' },
+    { key: 'expired', label: '已过期' },
+  ];
+  const counts = {};
+  statuses.forEach(s => counts[s.key] = INQUIRY_RECORDS.filter(r => s.key === 'all' || r.status === s.key).length);
+  const list = cirStatus === 'all' ? INQUIRY_RECORDS : INQUIRY_RECORDS.filter(r => r.status === cirStatus);
+
+  return `
+  <h1 class="page-title">我的询价</h1>
+  <p class="page-desc">查看历史询价记录与报价</p>
+
+  <div class="status-tabs">
+    ${statuses.map(s => `<div class="status-tab ${cirStatus===s.key?'active':''}" onclick="filterCIR('${s.key}')">${s.label}<span class="count">${counts[s.key]}</span></div>`).join('')}
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>询价单号</th><th>状态</th><th>提货</th><th>目的地</th><th>方式</th><th>卡司</th><th>报价</th><th>询价时间</th><th>操作</th></tr></thead>
+    <tbody>
+      ${list.map(r => `
+        <tr>
+          <td style="color:#667eea;font-weight:500;">${r.id}</td>
+          <td><span class="status-pill ${stClass[r.status]}">${stMap[r.status]}</span></td>
+          <td>${r.from}</td>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.to}</td>
+          <td><span class="tag">${r.mode}</span></td>
+          <td>${r.carrier}</td>
+          <td style="color:#ef4444;font-weight:600;">$${r.price}</td>
+          <td style="color:#6b7280;font-size:12px;">${r.time}</td>
+          <td>
+            ${r.orderNo
+              ? `<span class="btn-ghost" onclick="openDetail('${r.orderNo}')">查看订单</span>`
+              : `<span class="btn-ghost" onclick="toast('请前往我要询价重新下单')">去下单</span>`}
+          </td>
+        </tr>
+      `).join('')}
+      ${list.length === 0 ? `<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>暂无询价记录</div></td></tr>` : ''}
+    </tbody>
+  </table>
+  `;
+}
+function filterCIR(s) { cirStatus = s; showView('client-inquiry-records'); }
+
+/* ============ Client Orders ============ */
+let coStatus = 'all';
+function renderClientOrders() {
+  const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
+  const statuses = [
+    { key: 'all', label: '全部' },
+    { key: 'pending', label: '待审核' },
+    { key: 'transit', label: '在途' },
+    { key: 'delivered', label: '已妥投' },
+  ];
+  const counts = {};
+  statuses.forEach(s => counts[s.key] = ORDERS.filter(o => s.key === 'all' || o.status === s.key).length);
+  const list = coStatus === 'all' ? ORDERS : ORDERS.filter(o => o.status === coStatus);
+
+  return `
+  <h1 class="page-title">我的订单</h1>
+  <p class="page-desc">查看所有卡车订单状态与物流轨迹</p>
+
+  <div class="status-tabs">
+    ${statuses.map(s => `<div class="status-tab ${coStatus===s.key?'active':''}" onclick="filterCO('${s.key}')">${s.label}<span class="count">${counts[s.key]}</span></div>`).join('')}
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <input placeholder="搜索卡车单号 / 追踪号">
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead><tr><th>卡车单号</th><th>状态</th><th>提货</th><th>目的地</th><th>卡司</th><th>费用</th><th>创建时间</th><th>操作</th></tr></thead>
+    <tbody>
+      ${list.map(o => `
+        <tr onclick="openDetail('${o.id}')">
+          <td class="order-no">${o.id}</td>
+          <td><span class="status-pill st-${o.status}">${stMap[o.status]}</span></td>
+          <td>${o.from}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.to}</td>
+          <td>${o.carrier}</td>
+          <td style="color:#ef4444;font-weight:600;">$${o.price}</td>
+          <td style="color:#6b7280;font-size:12px;">${o.createTime}</td>
+          <td><span class="btn-ghost" onclick="event.stopPropagation();openDetail('${o.id}')">详情</span></td>
+        </tr>
+      `).join('')}
+      ${list.length === 0 ? `<tr><td colspan="8"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
+    </tbody>
+  </table>
+  `;
+}
+function filterCO(s) { coStatus = s; showView('client-orders'); }
+
+/* ============ Wallet (Client) ============ */
+function renderWallet() {
+  const w = WALLET;
+  const txMap = { recharge: '充值', consume: '消费', refund: '退款' };
+  const txColor = { recharge: '#16a34a', consume: '#ef4444', refund: '#2563eb' };
+  const billSt = { paid: '已支付', unpaid: '待支付', overdue: '已逾期' };
+  const billCls = { paid: 'st-delivered', unpaid: 'st-pending', overdue: 'st-failed' };
+
+  return `
+  <h1 class="page-title">资金账户</h1>
+  <p class="page-desc">账户余额、充值、账单与收支明细</p>
+
+  <!-- 余额卡片 -->
+  <div class="card" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:13px;opacity:.85;">可用余额（${w.currency}）</div>
+        <div style="font-size:36px;font-weight:700;margin-top:8px;">$${w.balance.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+        <div style="font-size:12px;opacity:.8;margin-top:6px;">冻结金额：$${w.frozen.toFixed(2)}　|　已用额度：$${(w.balance*0.3).toFixed(2)}</div>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn" style="background:#fff;color:#667eea;" onclick="openRecharge()">立即充值</button>
+        <button class="btn btn-default btn-sm mt-3" style="background:rgba(255,255,255,.15);color:#fff;border:none;display:block;margin-left:auto;" onclick="toast('提现功能即将开放')">申请提现</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 账单历史 -->
+  <div class="card">
+    <div class="card-header"><h3>账单历史</h3><button class="btn btn-default btn-sm" onclick="toast('下载账单明细')">导出账单</button></div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>账单号</th><th>账期</th><th>金额</th><th>状态</th><th>出账时间</th><th>操作</th></tr></thead>
+        <tbody>
+          ${w.bills.map(b => `
+            <tr>
+              <td style="color:#667eea;font-weight:500;">${b.id}</td>
+              <td>${b.period}</td>
+              <td style="color:#ef4444;font-weight:600;">$${b.amount.toFixed(2)}</td>
+              <td><span class="status-pill ${billCls[b.status]}">${billSt[b.status]}</span></td>
+              <td style="color:#6b7280;font-size:12px;">${b.time}</td>
+              <td><span class="btn-ghost" onclick="toast('查看账单 ${b.id}')">查看</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 收支明细 -->
+  <div class="card">
+    <div class="card-header"><h3>收支明细</h3>
+      <div class="flex gap-2">
+        <select class="form-select" style="width:auto;font-size:12px;">
+          <option>全部类型</option><option>充值</option><option>消费</option><option>退款</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>流水号</th><th>类型</th><th>金额</th><th>余额</th><th>时间</th><th>备注</th></tr></thead>
+        <tbody>
+          ${w.transactions.map(t => `
+            <tr>
+              <td style="color:#6b7280;">${t.id}</td>
+              <td><span class="status-pill" style="background:${txColor[t.type]}22;color:${txColor[t.type]};">${txMap[t.type]}</span></td>
+              <td style="color:${txColor[t.type]};font-weight:600;">${t.amount>0?'+':''}$${t.amount.toFixed(2)}</td>
+              <td>$${t.balance.toFixed(2)}</td>
+              <td style="color:#6b7280;font-size:12px;">${t.time}</td>
+              <td style="color:#6b7280;">${t.remark}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+function openRecharge() {
+  const body = document.getElementById('rechargeBody');
+  body.innerHTML = `
+    <div class="form-group">
+      <label>充值金额 (USD)</label>
+      <input type="number" id="rechargeAmt" class="form-input" placeholder="请输入充值金额" value="1000" min="1">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      ${[500,1000,3000,5000,10000].map(v => `<button class="btn btn-default btn-sm" onclick="document.getElementById('rechargeAmt').value=${v}">$${v}</button>`).join('')}
+    </div>
+    <div class="form-group">
+      <label>充值方式</label>
+      <select class="form-select" id="rechargeWay">
+        <option value="bank">银行转账</option>
+        <option value="card">信用卡</option>
+        <option value="wire">电汇</option>
+      </select>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:0;">💡 银行转账到账约 1-2 个工作日，信用卡实时到账。</div>
+  `;
+  document.getElementById('rechargeModal').classList.add('active');
+}
+
+function submitRecharge() {
+  const amt = +document.getElementById('rechargeAmt').value;
+  if (!amt || amt <= 0) { toast('请输入有效金额'); return; }
+  WALLET.balance += amt;
+  WALLET.transactions.unshift({
+    id: 'TX' + Date.now().toString().slice(-6),
+    type: 'recharge', amount: amt, balance: WALLET.balance,
+    time: new Date().toLocaleString('zh-CN', { hour12: false }),
+    remark: '在线充值'
+  });
+  document.getElementById('rechargeModal').classList.remove('active');
+  showView('wallet');
+  toast('充值申请已提交，$' + amt + ' 将在到账后更新余额');
 }
 
 /* ============ Utils ============ */
