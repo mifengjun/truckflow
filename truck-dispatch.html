@@ -238,6 +238,28 @@
   .fee-row .fee-amt { color: #1f2937; font-weight: 500; }
   .fee-row.total { border-top: 1px solid #e5e7eb; margin-top: 6px; padding-top: 8px; font-weight: 700; }
   .fee-row.total .fee-amt { color: #ef4444; font-size: 16px; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .app-layout { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; height: auto; }
+    .sidebar-header { display: none; }
+    .sidebar-menu { display: flex; flex-direction: row; padding: 0; overflow-x: auto; flex-wrap: nowrap; }
+    .menu-group { display: none; }
+    .menu-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
+    .menu-item.active { border-bottom-color: #667eea; border-left: none; }
+    .content { padding: 12px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .checkbox-group { grid-template-columns: 1fr; }
+    .radio-pills, .pallet-types { flex-direction: column; }
+    .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar .search input { width: 100%; }
+    .modal { width: 95vw; max-height: 90vh; overflow-y: auto; }
+    .detail-header { flex-direction: column; gap: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -343,6 +365,14 @@
       <button class="btn btn-default" onclick="document.getElementById('rechargeModal').classList.remove('active')">取消</button>
       <button class="btn btn-primary" onclick="submitRecharge()">确认充值</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="genericModal">
+  <div class="modal" style="width:600px;">
+    <div class="modal-header" id="genericTitle">提示</div>
+    <div class="modal-body" id="genericBody"></div>
+    <div class="modal-footer" id="genericFooter"></div>
   </div>
 </div>
 
@@ -655,11 +685,11 @@ function renderInquiry() {
       <div class="form-grid">
         <div>
           <label class="form-label"><span class="req">*</span>收货方名称</label>
-          <input class="form-input" value="Amazon.com Services LLC">
+          <input class="form-input" id="recvName" value="Amazon.com Services LLC">
         </div>
         <div>
           <label class="form-label"><span class="req">*</span>收货邮编</label>
-          <input class="form-input" value="92374">
+          <input class="form-input" id="recvZip" value="92374">
         </div>
         <div class="full">
           <label class="form-label"><span class="req">*</span>收货详细地址</label>
@@ -675,7 +705,7 @@ function renderInquiry() {
         </div>
         <div>
           <label class="form-label"><span class="req">*</span>提货日期</label>
-          <input type="date" class="form-input" value="2026-09-27">
+          <input type="date" class="form-input" id="pickupDate" value="2026-09-27">
         </div>
         <div class="full">
           <label class="form-label">备注</label>
@@ -867,9 +897,26 @@ function calcAccessorialFee() {
 }
 
 function doInquiry() {
+  // 必填校验
+  const recvName = document.getElementById('recvName').value.trim();
+  const recvZip = document.getElementById('recvZip').value.trim();
+  const delivAddr = document.getElementById('delivAddr').value.trim();
+  const pickupDate = document.getElementById('pickupDate').value;
   const len = +document.getElementById('pLen').value;
   const qty = +document.getElementById('pQty').value;
+  if (!recvName) { toast('请填写收货方名称'); document.getElementById('recvName').focus(); return; }
+  if (!recvZip) { toast('请填写收货邮编'); document.getElementById('recvZip').focus(); return; }
+  if (!delivAddr) { toast('请填写收货详细地址'); document.getElementById('delivAddr').focus(); return; }
+  if (!pickupDate) { toast('请选择提货日期'); document.getElementById('pickupDate').focus(); return; }
   if (len <= 0 || qty <= 0) { toast('请填写有效的尺寸和数量'); return; }
+  // 商品校验
+  const goodsRows = document.querySelectorAll('#goodsBody tr');
+  let goodsValid = true;
+  goodsRows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (!inputs[1].value.trim()) goodsValid = false;
+  });
+  if (!goodsValid) { toast('请填写商品品名'); return; }
   const acc = calcAccessorialFee();
   const body = document.getElementById('quoteBody');
   body.innerHTML = CARRIERS.map((c, i) => {
@@ -891,6 +938,31 @@ function doInquiry() {
   }).join('');
   document.getElementById('quoteResult').style.display = 'block';
   document.getElementById('quoteResult').scrollIntoView({ behavior: 'smooth' });
+
+  // 保存询价记录
+  let custId, custName;
+  if (currentRole === 'admin') {
+    custId = document.getElementById('inqCustomer')?.value || 'C001';
+    custName = CUSTOMERS.find(c => c.id === custId)?.name || '';
+  } else {
+    custId = currentCustomerId;
+    custName = CUSTOMERS.find(c => c.id === currentCustomerId)?.name || '';
+  }
+  const goodsSummary = Array.from(goodsRows).map(tr => {
+    const inputs = tr.querySelectorAll('input');
+    return `${inputs[1].value || '商品'}×${inputs[3].value || 0}`;
+  }).join(',');
+  const fromWh = document.getElementById('whType').value === 'yqn' ? 'YQN-LA仓' : '外部仓';
+  const toAddr = document.getElementById('delivAddr')?.value || '目的地';
+  const inqId = 'IQ' + Date.now().toString().slice(-10);
+  INQUIRY_RECORDS.unshift({
+    id: inqId, customerId: custId, customerName: custName,
+    status: 'quoted', from: fromWh, to: toAddr, mode: 'LTL',
+    pallets: qty, goods: goodsSummary, carrier: CARRIERS[0].name,
+    price: CARRIERS[0].base + acc,
+    time: new Date().toLocaleString('zh-CN', { hour12: false })
+  });
+  lastInquiryId = inqId;
   toast('询价成功，已获取 ' + CARRIERS.length + ' 家卡司报价');
 }
 
@@ -923,6 +995,15 @@ function placeOrder(idx, total) {
 }
 function closeModal() { document.getElementById('confirmModal').classList.remove('active'); }
 
+function showGenericModal(title, bodyHtml, footerHtml) {
+  const m = document.getElementById('genericModal');
+  m.querySelector('.modal-header').textContent = title;
+  m.querySelector('#genericBody').innerHTML = bodyHtml;
+  m.querySelector('#genericFooter').innerHTML = footerHtml || '<button class="btn btn-default" onclick="closeGenericModal()">关闭</button>';
+  m.classList.add('active');
+}
+function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
+
 function submitOrder() {
   closeModal();
   const newId = 'TK' + Date.now().toString().slice(-10);
@@ -942,7 +1023,23 @@ function submitOrder() {
     goods: [{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}],
     createTime: new Date().toLocaleString('zh-CN', { hour12: false }), tracking: ''
   });
-  toast('下单成功！请等待 5 分钟后到卡车单列表查看');
+  // 关联询价记录并更新状态
+  if (lastInquiryId) {
+    const inq = INQUIRY_RECORDS.find(r => r.id === lastInquiryId);
+    if (inq) { inq.status = 'ordered'; inq.orderNo = newId; inq.carrier = selectedQuote.name; inq.price = selectedQuote.total; }
+  }
+  // 扣除客户钱包余额
+  const w = WALLETS[custId];
+  if (w) {
+    w.balance -= selectedQuote.total;
+    w.transactions.unshift({
+      id: 'TX' + Date.now().toString().slice(-6),
+      type: 'consume', amount: -selectedQuote.total, balance: w.balance,
+      time: new Date().toLocaleString('zh-CN', { hour12: false }),
+      remark: `卡车单 ${newId} 扣费`
+    });
+  }
+  toast('下单成功！已从账户扣除 $' + selectedQuote.total);
   setTimeout(() => {
     const ordersView = currentRole === 'admin' ? 'orders' : 'client-orders';
     document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
@@ -965,7 +1062,6 @@ function renderOrders() {
   ];
   const counts = {};
   statuses.forEach(s => counts[s.key] = ORDERS.filter(o => s.key === 'all' || o.status === s.key).length);
-  const list = ORDERS.filter(o => currentStatus === 'all' || o.status === o.status);
   const filtered = currentStatus === 'all' ? ORDERS : ORDERS.filter(o => o.status === currentStatus);
   const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
 
@@ -1014,6 +1110,8 @@ function filterStatus(s) { currentStatus = s; showView('orders'); }
 
 /* ============ Order Detail ============ */
 let currentOrderId = null;
+let selectedQuote = null;
+let lastInquiryId = null;
 function openDetail(id) { currentOrderId = id; showView('detail'); }
 
 function renderDetail(id) {
@@ -1044,8 +1142,8 @@ function renderDetail(id) {
       <div class="detail-meta">创建时间：${o.createTime} · <span class="status-pill st-${o.status}">${stMap[o.status]}</span> · <span class="tag">${o.mode}</span></div>
     </div>
     <div class="flex gap-2">
-      <button class="btn btn-default btn-sm">联系客服</button>
-      <button class="btn btn-primary btn-sm">查看附件</button>
+      <button class="btn btn-default btn-sm" onclick="contactService()">联系客服</button>
+      <button class="btn btn-primary btn-sm" onclick="viewAttachments()">查看附件</button>
     </div>
   </div>
 
@@ -1132,29 +1230,20 @@ function renderDetail(id) {
 function renderTracking() {
   return `
   <h1 class="page-title">物流跟踪查询</h1>
-  <p class="page-desc">通过卡车单号或追踪号查询货物实时位置</p>
+  <p class="page-desc">通过卡车单号或追踪号查询货物实时位置，追踪号以 600 开头为 YQN 自营</p>
   <div class="card">
     <div class="card-body">
       <div class="flex gap-2">
-        <input class="form-input" placeholder="输入卡车单号 / 追踪号" value="6002389145" style="max-width:360px;">
-        <button class="btn btn-primary" onclick="toast('查询中...')">查询</button>
+        <input class="form-input" id="trackInput" placeholder="输入卡车单号 / 追踪号" value="6002389145" style="max-width:360px;">
+        <button class="btn btn-primary" onclick="doTracking()">查询</button>
+        <button class="btn btn-default btn-sm" onclick="document.getElementById('trackInput').value='6002389145';doTracking()">示例查询</button>
       </div>
+      <div class="form-hint mt-3">💡 可输入卡车单号（如 TK20260926001）或追踪号（如 6002389145）查询</div>
     </div>
   </div>
-  <div class="card">
+  <div class="card" id="trackingResult" style="display:none;">
     <div class="card-header"><h3>查询结果</h3></div>
-    <div class="card-body">
-      <div class="tracking-map" style="height:240px;">
-        <div class="tracking-route"></div>
-        <div class="tracking-dot start"></div>
-        <div class="tracking-dot current"></div>
-        <div class="tracking-dot end"></div>
-      </div>
-      <div class="timeline mt-3">
-        <div class="timeline-item done"><div class="tl-title">已提货</div><div class="tl-time">2026-09-27 08:30</div><div class="tl-desc">YQN-LA仓 提货完成</div></div>
-        <div class="timeline-item active"><div class="tl-title">运输中</div><div class="tl-time">2026-09-27 ~ 至今</div><div class="tl-desc">当前位置：San Bernardino, CA · 距目的地约 120 英里</div></div>
-        <div class="timeline-item"><div class="tl-title">预计送达</div><div class="tl-time">2026-09-28</div><div class="tl-desc">Amazon LAX9</div></div>
-      </div>
+    <div class="card-body" id="trackingResultBody">
     </div>
   </div>
   `;
@@ -1166,21 +1255,27 @@ function renderAddressBook() {
   return `
   <div class="toolbar">
     <h1 class="page-title" style="margin:0;">地址簿</h1>
-    <button class="btn btn-primary btn-sm" onclick="toast('新建地址功能演示')">+ 新建地址</button>
+    <div class="flex gap-2">
+      <button class="btn btn-default btn-sm" onclick="toast('已导入 6 条常用地址')">📥 导入地址</button>
+      <button class="btn btn-primary btn-sm" onclick="newAddress()">+ 新建地址</button>
+    </div>
   </div>
-  <p class="page-desc">常用收发货地址、亚马逊 FBA 仓地址库</p>
+  <p class="page-desc">常用收发货地址、亚马逊 FBA 仓地址库，共 ${ADDRESS_BOOK.length} 条</p>
   <div class="card">
     <div class="card-body" style="padding:0">
       <table class="data-table">
         <thead><tr><th>名称</th><th>类型</th><th>地址</th><th>电话</th><th>操作</th></tr></thead>
         <tbody>
-          ${ADDRESS_BOOK.map(a => `
+          ${ADDRESS_BOOK.map((a, idx) => `
             <tr>
               <td style="font-weight:500;">${a.name}</td>
               <td><span class="status-pill ${typeColor[a.type]||'st-pending'}">${a.type}</span></td>
               <td>${a.address}</td>
               <td style="color:#6b7280;">${a.phone || '—'}</td>
-              <td><span class="btn-ghost" onclick="toast('编辑地址')">编辑</span></td>
+              <td>
+                <span class="btn-ghost" onclick="editAddress(${idx})">编辑</span>
+                <span class="btn-ghost" style="color:#dc2626;" onclick="deleteAddress(${idx})">删除</span>
+              </td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -1239,7 +1334,7 @@ function renderBilling() {
               <td style="color:#16a34a;font-weight:600;">$${b.amount.toFixed(2)}</td>
               <td><span class="status-pill ${b.status==='paid'?'st-delivered':'st-pending'}">${b.status==='paid'?'已支付':'待支付'}</span></td>
               <td style="color:#6b7280;font-size:12px;">${b.time}</td>
-              <td><span class="btn-ghost" onclick="toast('查看账单 ${b.id}')">查看</span>${b.status!=='paid'?`<span class="btn-ghost" onclick="toast('发送催款通知')">催款</span>`:''}</td>
+              <td><span class="btn-ghost" onclick="viewBill('${b.id}')">查看</span>${b.status!=='paid'?`<span class="btn-ghost" onclick="sendReminder('${b.id}')">催款</span>`:''}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -1278,40 +1373,98 @@ function renderBilling() {
 
 /* ============ Dashboard ============ */
 function renderDashboard() {
+  const totalOrders = ORDERS.length;
+  const delivered = ORDERS.filter(o => o.status === 'delivered').length;
+  const inTransit = ORDERS.filter(o => o.status === 'transit').length;
+  const failed = ORDERS.filter(o => o.status === 'failed').length;
+  const deliveryRate = totalOrders > 0 ? ((delivered / totalOrders) * 100).toFixed(1) : 0;
+  const totalRevenue = ORDERS.reduce((s, o) => s + o.price, 0);
+  const avgPrice = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(0) : 0;
+
+  // 客户订单分布
+  const customerStats = CUSTOMERS.map(c => {
+    const orders = ORDERS.filter(o => o.customerId === c.id);
+    return { name: c.name, count: orders.length, revenue: orders.reduce((s, o) => s + o.price, 0) };
+  }).filter(c => c.count > 0).sort((a, b) => b.revenue - a.revenue);
+  const maxCustRevenue = Math.max(...customerStats.map(c => c.revenue), 1);
+
+  // 卡司使用占比（基于实际订单）
+  const carrierStats = {};
+  ORDERS.forEach(o => { carrierStats[o.carrier] = (carrierStats[o.carrier] || 0) + 1; });
+  const carrierColors = { 'YQN-Transport': '#16a34a', 'CEVA': '#2563eb', 'FedEx Freight': '#d97706', 'XPO Logistics': '#dc2626' };
+  const carrierList = Object.entries(carrierStats).map(([name, count]) => ({
+    name, count, pct: Math.round((count / totalOrders) * 100), color: carrierColors[name] || '#6b7280'
+  })).sort((a, b) => b.count - a.count);
+
   return `
   <h1 class="page-title">数据看板</h1>
-  <p class="page-desc">卡派业务运营概览</p>
+  <p class="page-desc">卡派业务运营概览，实时统计订单、客户、卡司数据</p>
   <div class="stat-grid">
-    <div class="stat-card primary"><div class="stat-label">本月订单数</div><div class="stat-value">186</div><div class="stat-sub">↑ 18% 环比</div></div>
-    <div class="stat-card success"><div class="stat-label">妥投率</div><div class="stat-value">96.8%</div><div class="stat-sub">目标 95%</div></div>
-    <div class="stat-card warn"><div class="stat-label">平均时效</div><div class="stat-value">2.8天</div><div class="stat-sub">↓ 0.3天 环比</div></div>
-    <div class="stat-card danger"><div class="stat-label">异常率</div><div class="stat-value">3.2%</div><div class="stat-sub">丢件/货损/延误</div></div>
+    <div class="stat-card primary"><div class="stat-label">总订单数</div><div class="stat-value">${totalOrders}</div><div class="stat-sub">在途 ${inTransit} · 妥投 ${delivered}</div></div>
+    <div class="stat-card success"><div class="stat-label">妥投率</div><div class="stat-value">${deliveryRate}%</div><div class="stat-sub">目标 95%</div></div>
+    <div class="stat-card warn"><div class="stat-label">平均客单价</div><div class="stat-value">$${avgPrice}</div><div class="stat-sub">本月</div></div>
+    <div class="stat-card danger"><div class="stat-label">异常订单</div><div class="stat-value">${failed}</div><div class="stat-sub">下单失败</div></div>
   </div>
+
   <div class="card">
-    <div class="card-header"><h3>各卡司使用占比</h3></div>
+    <div class="card-header"><h3>客户订单贡献排名</h3><span style="font-size:12px;color:#9ca3af;">按运费收入排序</span></div>
     <div class="card-body">
-      ${[
-        { name: 'YQN-Transport', pct: 45, color: '#16a34a' },
-        { name: 'CEVA', pct: 28, color: '#2563eb' },
-        { name: 'FedEx Freight', pct: 15, color: '#d97706' },
-        { name: 'XPO Logistics', pct: 12, color: '#dc2626' },
-      ].map(c => `
+      ${customerStats.map(c => `
         <div style="margin-bottom:14px;">
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-            <span>${c.name}</span><span style="font-weight:600;">${c.pct}%</span>
+            <span>${c.name}</span><span style="font-weight:600;">$${c.revenue.toLocaleString()} <span style="color:#9ca3af;font-weight:400;">(${c.count}单)</span></span>
           </div>
           <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
-            <div style="width:${c.pct}%;height:100%;background:${c.color};border-radius:4px;"></div>
+            <div style="width:${(c.revenue/maxCustRevenue*100).toFixed(1)}%;height:100%;background:linear-gradient(90deg,#667eea,#818cf8);border-radius:4px;"></div>
           </div>
         </div>`).join('')}
     </div>
   </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-header"><h3>各卡司使用占比</h3></div>
+      <div class="card-body">
+        ${carrierList.map(c => `
+          <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+              <span>${c.name}</span><span style="font-weight:600;">${c.pct}% <span style="color:#9ca3af;font-weight:400;">(${c.count}单)</span></span>
+            </div>
+            <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+              <div style="width:${c.pct}%;height:100%;background:${c.color};border-radius:4px;"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>订单状态分布</h3></div>
+      <div class="card-body">
+        ${[
+          { name: '待审核', count: ORDERS.filter(o=>o.status==='pending').length, color: '#f59e0b' },
+          { name: '待提货', count: ORDERS.filter(o=>o.status==='pickup').length, color: '#2563eb' },
+          { name: '在途', count: ORDERS.filter(o=>o.status==='transit').length, color: '#4f46e5' },
+          { name: '已妥投', count: ORDERS.filter(o=>o.status==='delivered').length, color: '#16a34a' },
+          { name: '下单失败', count: ORDERS.filter(o=>o.status==='failed').length, color: '#dc2626' },
+        ].map(s => `
+          <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+              <span>${s.name}</span><span style="font-weight:600;">${s.count} 单</span>
+            </div>
+            <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+              <div style="width:${totalOrders>0?(s.count/totalOrders*100).toFixed(1):0}%;height:100%;background:${s.color};border-radius:4px;"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-header"><h3>近 7 日订单趋势</h3></div>
     <div class="card-body">
       <div style="display:flex;align-items:flex-end;gap:12px;height:160px;">
         ${[28,35,42,30,48,55,46].map((v,i) => `
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="font-size:11px;color:#6b7280;font-weight:600;">${v}</div>
             <div style="width:100%;background:linear-gradient(180deg,#667eea,#818cf8);height:${v*2}px;border-radius:4px 4px 0 0;min-height:8px;"></div>
             <div style="font-size:11px;color:#9ca3af;">${['周一','周二','周三','周四','周五','周六','周日'][i]}</div>
           </div>`).join('')}
@@ -1322,30 +1475,123 @@ function renderDashboard() {
 }
 
 /* ============ Claims ============ */
+const CLAIMS = [
+  { id: 'CM-20260926001', orderNo: 'TK20260920008', type: '货损', carrier: 'XPO Logistics', amount: 320, time: '2026-09-26 10:20', status: 'pending', customerId:'C001', desc: '外包装破损，内部商品刮花，客户拒收3件' },
+  { id: 'CM-20260925003', orderNo: 'TK20260918012', type: '丢件', carrier: 'FedEx Freight', amount: 1580, time: '2026-09-25 14:50', status: 'pending', customerId:'C002', desc: '整票货物丢失，卡司无法提供签收证明' },
+  { id: 'CM-20260924007', orderNo: 'TK20260912005', type: '延误', carrier: 'CEVA', amount: 0, time: '2026-09-24 09:15', status: 'processing', customerId:'C003', desc: '超出承诺时效4天，客户要求赔偿仓储费' },
+  { id: 'CM-20260920012', orderNo: 'TK20260905009', type: '货损', carrier: 'YQN-Transport', amount: 150, time: '2026-09-20 16:30', status: 'done', customerId:'C002', desc: '托盘倾倒导致1件商品变形，已按申报价值赔偿' },
+];
+let claimStatus = 'all';
 function renderClaims() {
+  const stMap = { pending: '待处理', processing: '处理中', done: '已完结' };
+  const stCls = { pending: 'st-pending', processing: 'st-transit', done: 'st-delivered' };
+  const statuses = [
+    { key: 'all', label: '全部' },
+    { key: 'pending', label: '待处理' },
+    { key: 'processing', label: '处理中' },
+    { key: 'done', label: '已完结' },
+  ];
+  const counts = {};
+  statuses.forEach(s => counts[s.key] = CLAIMS.filter(c => s.key === 'all' || c.status === s.key).length);
+  const list = claimStatus === 'all' ? CLAIMS : CLAIMS.filter(c => c.status === claimStatus);
+
   return `
   <h1 class="page-title">异常售后</h1>
-  <p class="page-desc">丢件、货损、延误等异常工单处理</p>
-  <div class="status-tabs">
-    <div class="status-tab active">全部 8</div>
-    <div class="status-tab">待处理 3</div>
-    <div class="status-tab">处理中 2</div>
-    <div class="status-tab">已完结 3</div>
+  <p class="page-desc">丢件、货损、延误等异常工单处理，跟踪赔偿进度</p>
+
+  <div class="stat-grid">
+    <div class="stat-card primary"><div class="stat-label">工单总数</div><div class="stat-value">${CLAIMS.length}</div><div class="stat-sub">本月</div></div>
+    <div class="stat-card warn"><div class="stat-label">待处理</div><div class="stat-value">${counts.pending}</div><div class="stat-sub">需及时跟进</div></div>
+    <div class="stat-card danger"><div class="stat-label">涉及金额</div><div class="stat-value">$${CLAIMS.reduce((s,c)=>s+c.amount,0).toLocaleString()}</div><div class="stat-sub">含未赔付</div></div>
+    <div class="stat-card success"><div class="stat-label">已完结</div><div class="stat-value">${counts.done}</div><div class="stat-sub">已赔付/已解决</div></div>
   </div>
+
+  <div class="status-tabs">
+    ${statuses.map(s => `<div class="status-tab ${claimStatus===s.key?'active':''}" onclick="filterClaim('${s.key}')">${s.label}<span class="count">${counts[s.key]}</span></div>`).join('')}
+  </div>
+
   <div class="card">
     <div class="card-body" style="padding:0">
       <table class="data-table">
-        <thead><tr><th>工单号</th><th>关联卡车单</th><th>类型</th><th>卡司</th><th>金额</th><th>创建时间</th><th>状态</th></tr></thead>
+        <thead><tr><th>工单号</th><th>关联卡车单</th><th>类型</th><th>卡司</th><th>金额</th><th>创建时间</th><th>状态</th><th>操作</th></tr></thead>
         <tbody>
-          <tr><td>CM-20260926001</td><td>TK20260920008</td><td>货损</td><td>XPO Logistics</td><td>$320</td><td>2026-09-26</td><td><span class="status-pill st-pending">待处理</span></td></tr>
-          <tr><td>CM-20260925003</td><td>TK20260918012</td><td>丢件</td><td>FedEx Freight</td><td>$1,580</td><td>2026-09-25</td><td><span class="status-pill st-pending">待处理</span></td></tr>
-          <tr><td>CM-20260924007</td><td>TK20260912005</td><td>延误</td><td>CEVA</td><td>$0</td><td>2026-09-24</td><td><span class="status-pill st-transit">处理中</span></td></tr>
-          <tr><td>CM-20260920012</td><td>TK20260905009</td><td>货损</td><td>YQN-Transport</td><td>$150</td><td>2026-09-20</td><td><span class="status-pill st-delivered">已完结</span></td></tr>
+          ${list.map(c => `
+            <tr>
+              <td style="color:#667eea;font-weight:500;">${c.id}</td>
+              <td><span class="btn-ghost" onclick="openDetail('${c.orderNo}')">${c.orderNo}</span></td>
+              <td><span class="tag">${c.type}</span></td>
+              <td>${c.carrier}</td>
+              <td style="color:${c.amount>0?'#ef4444':'#6b7280'};font-weight:600;">${c.amount>0?'$'+c.amount:'—'}</td>
+              <td style="color:#6b7280;font-size:12px;">${c.time}</td>
+              <td><span class="status-pill ${stCls[c.status]}">${stMap[c.status]}</span></td>
+              <td>
+                <span class="btn-ghost" onclick="viewClaim('${c.id}')">详情</span>
+                ${c.status !== 'done' ? `<span class="btn-ghost" onclick="handleClaim('${c.id}')">处理</span>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+          ${list.length === 0 ? `<tr><td colspan="8"><div class="empty-state"><div class="icon">✅</div>暂无异常工单</div></td></tr>` : ''}
         </tbody>
       </table>
     </div>
   </div>
   `;
+}
+function filterClaim(s) { claimStatus = s; showView('claims'); }
+function viewClaim(id) {
+  const c = CLAIMS.find(x => x.id === id);
+  if (!c) return;
+  const stMap = { pending: '待处理', processing: '处理中', done: '已完结' };
+  showGenericModal('工单详情 - ' + c.id, `
+    <div class="info-grid">
+      <div class="info-item"><span class="label">工单类型</span><span class="value">${c.type}</span></div>
+      <div class="info-item"><span class="label">关联卡车单</span><span class="value" style="color:#667eea;">${c.orderNo}</span></div>
+      <div class="info-item"><span class="label">卡司</span><span class="value">${c.carrier}</span></div>
+      <div class="info-item"><span class="label">涉及金额</span><span class="value" style="color:#ef4444;">${c.amount>0?'$'+c.amount:'—'}</span></div>
+      <div class="info-item"><span class="label">创建时间</span><span class="value">${c.time}</span></div>
+      <div class="info-item"><span class="label">当前状态</span><span class="value">${stMap[c.status]}</span></div>
+    </div>
+    <div class="form-group" style="margin-top:16px;"><label>问题描述</label>
+      <div style="padding:12px;background:#f9fafb;border-radius:6px;font-size:13px;color:#374151;">${c.desc}</div>
+    </div>
+    <div class="form-group"><label>处理记录</label>
+      <div style="padding:12px;background:#f9fafb;border-radius:6px;font-size:12px;color:#6b7280;line-height:1.8;">
+        ${c.status === 'done' ? '✅ 已与卡司确认责任，赔偿已支付至客户账户。' : c.status === 'processing' ? '⏳ 已联系卡司核实，等待卡司提供签收证明。' : '📋 已受理，正在联系卡司核实情况。'}
+      </div>
+    </div>
+  `, c.status !== 'done' ? `
+    <button class="btn btn-default" onclick="closeGenericModal()">关闭</button>
+    <button class="btn btn-primary" onclick="handleClaim('${c.id}')">处理工单</button>
+  ` : undefined);
+}
+function handleClaim(id) {
+  const c = CLAIMS.find(x => x.id === id);
+  if (!c) return;
+  showGenericModal('处理工单 - ' + c.id, `
+    <div class="form-group"><label>处理结果</label>
+      <select class="form-select" id="claimResult">
+        <option value="processing">标记为处理中</option>
+        <option value="done">标记为已完结（已赔付/已解决）</option>
+      </select>
+    </div>
+    <div class="form-group"><label>赔付金额 (USD)</label>
+      <input type="number" class="form-input" id="claimPayAmt" value="${c.amount}" min="0">
+    </div>
+    <div class="form-group"><label>处理备注</label>
+      <textarea class="form-textarea" id="claimRemark" placeholder="请填写处理说明"></textarea>
+    </div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveClaim('${id}')">提交</button>
+  `);
+}
+function saveClaim(id) {
+  const c = CLAIMS.find(x => x.id === id);
+  const result = document.getElementById('claimResult').value;
+  c.status = result;
+  closeGenericModal();
+  showView('claims');
+  toast(result === 'done' ? '工单已完结，赔偿已处理' : '工单已标记为处理中');
 }
 
 /* ============ Admin Inquiry Records ============ */
@@ -1396,7 +1642,7 @@ function renderInquiryRecords() {
           <td style="color:#ef4444;font-weight:600;">$${r.price}</td>
           <td style="color:#6b7280;font-size:12px;">${r.time}</td>
           <td>
-            ${r.orderNo ? `<span class="btn-ghost" onclick="openDetail('${r.orderNo}')">查看订单</span>` : `<span class="btn-ghost" onclick="toast('重新询价')">重询价</span>`}
+            ${r.orderNo ? `<span class="btn-ghost" onclick="openDetail('${r.orderNo}')">查看订单</span>` : `<span class="btn-ghost" onclick="reInquiry()">重询价</span>`}
           </td>
         </tr>
       `).join('')}
@@ -1433,7 +1679,10 @@ function renderCustomers() {
         <option>全部状态</option><option>正常</option><option>冻结</option>
       </select>
     </div>
-    <div><button class="btn btn-primary btn-sm" onclick="toast('新建客户功能演示')">+ 新建客户</button></div>
+    <div class="flex gap-2">
+      <button class="btn btn-default btn-sm" onclick="toast('客户批量导入功能演示')">📥 批量导入</button>
+      <button class="btn btn-primary btn-sm" onclick="newCustomer()">+ 新建客户</button>
+    </div>
   </div>
 
   <div class="card">
@@ -1457,8 +1706,9 @@ function renderCustomers() {
               <td><span class="status-pill ${stCls[c.status]}">${stMap[c.status]}</span></td>
               <td style="color:#6b7280;font-size:12px;">${c.registerTime}</td>
               <td>
-                <span class="btn-ghost" onclick="toast('查看客户 ${c.name} 详情')">详情</span>
-                <span class="btn-ghost" onclick="toast('调整信用额度')">调额</span>
+                <span class="btn-ghost" onclick="viewCustomer('${c.id}')">详情</span>
+                <span class="btn-ghost" onclick="adjustCredit('${c.id}')">调额</span>
+                <span class="btn-ghost" style="color:${c.status==='frozen'?'#16a34a':'#dc2626'};" onclick="toggleCustomerStatus('${c.id}')">${c.status==='frozen'?'解冻':'冻结'}</span>
               </td>
             </tr>`;
           }).join('')}
@@ -1541,7 +1791,7 @@ function renderClientInquiryRecords() {
           <td>
             ${r.orderNo
               ? `<span class="btn-ghost" onclick="openDetail('${r.orderNo}')">查看订单</span>`
-              : `<span class="btn-ghost" onclick="toast('请前往我要询价重新下单')">去下单</span>`}
+              : `<span class="btn-ghost" onclick="goOrder()">去下单</span>`}
           </td>
         </tr>
       `).join('')}
@@ -1624,14 +1874,18 @@ function renderWallet() {
       </div>
       <div style="text-align:right;">
         <button class="btn" style="background:#fff;color:#667eea;" onclick="openRecharge()">立即充值</button>
-        <button class="btn btn-default btn-sm mt-3" style="background:rgba(255,255,255,.15);color:#fff;border:none;display:block;margin-left:auto;" onclick="toast('提现功能即将开放')">申请提现</button>
+        <button class="btn btn-default btn-sm mt-3" style="background:rgba(255,255,255,.15);color:#fff;border:none;display:block;margin-left:auto;" onclick="withdraw()">申请提现</button>
       </div>
     </div>
   </div>
 
   <!-- 账单历史 -->
   <div class="card">
-    <div class="card-header"><h3>账单历史</h3><button class="btn btn-default btn-sm" onclick="toast('下载账单明细')">导出账单</button></div>
+    <div class="card-header"><h3>账单历史</h3>
+      <div class="flex gap-2">
+        <button class="btn btn-default btn-sm" onclick="exportBills()">导出账单</button>
+      </div>
+    </div>
     <div class="card-body" style="padding:0">
       <table class="data-table">
         <thead><tr><th>账单号</th><th>账期</th><th>金额</th><th>状态</th><th>出账时间</th><th>操作</th></tr></thead>
@@ -1643,7 +1897,7 @@ function renderWallet() {
               <td style="color:#ef4444;font-weight:600;">$${b.amount.toFixed(2)}</td>
               <td><span class="status-pill ${billCls[b.status]}">${billSt[b.status]}</span></td>
               <td style="color:#6b7280;font-size:12px;">${b.time}</td>
-              <td><span class="btn-ghost" onclick="toast('查看账单 ${b.id}')">查看</span></td>
+              <td><span class="btn-ghost" onclick="viewClientBill('${b.id}')">查看</span></td>
             </tr>
           `).join('')}
         </tbody>
@@ -1718,6 +1972,354 @@ function submitRecharge() {
   document.getElementById('rechargeModal').classList.remove('active');
   showView('wallet');
   toast('充值申请已提交，$' + amt + ' 将在到账后更新余额');
+}
+
+/* ============ Address Book Actions ============ */
+function newAddress() {
+  showGenericModal('新建地址', `
+    <div class="form-group"><label>名称</label><input class="form-input" id="addrName" placeholder="如：Amazon LAX9"></div>
+    <div class="form-group"><label>类型</label>
+      <select class="form-select" id="addrType">
+        <option>FBA仓库</option><option>自有仓</option><option>商业客户</option><option>住宅地址</option>
+      </select>
+    </div>
+    <div class="form-group"><label>详细地址</label><input class="form-input" id="addrAddr" placeholder="街道, 城市, 州 邮编"></div>
+    <div class="form-group"><label>联系电话（可选）</label><input class="form-input" id="addrPhone" placeholder="+1 ..."></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveAddress()">保存</button>
+  `);
+}
+function editAddress(idx) {
+  const a = ADDRESS_BOOK[idx];
+  showGenericModal('编辑地址', `
+    <div class="form-group"><label>名称</label><input class="form-input" id="addrName" value="${a.name}"></div>
+    <div class="form-group"><label>类型</label>
+      <select class="form-select" id="addrType">
+        ${['FBA仓库','自有仓','商业客户','住宅地址'].map(t => `<option ${t===a.type?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>详细地址</label><input class="form-input" id="addrAddr" value="${a.address}"></div>
+    <div class="form-group"><label>联系电话</label><input class="form-input" id="addrPhone" value="${a.phone||''}"></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-default" onclick="deleteAddress(${idx})" style="color:#dc2626;">删除</button>
+    <button class="btn btn-primary" onclick="saveAddress(${idx})">保存</button>
+  `);
+}
+function saveAddress(idx) {
+  const name = document.getElementById('addrName').value.trim();
+  const addr = document.getElementById('addrAddr').value.trim();
+  if (!name || !addr) { toast('请填写名称和地址'); return; }
+  const obj = { name, type: document.getElementById('addrType').value, address: addr, phone: document.getElementById('addrPhone').value.trim() };
+  if (idx === undefined) ADDRESS_BOOK.push(obj); else ADDRESS_BOOK[idx] = obj;
+  closeGenericModal();
+  showView('addressbook');
+  toast('地址已保存');
+}
+function deleteAddress(idx) {
+  ADDRESS_BOOK.splice(idx, 1);
+  closeGenericModal();
+  showView('addressbook');
+  toast('地址已删除');
+}
+
+/* ============ Customer Management Actions ============ */
+function newCustomer() {
+  showGenericModal('新建客户', `
+    <div class="form-group"><label>客户名称</label><input class="form-input" id="custName" placeholder="公司全称"></div>
+    <div class="form-group"><label>联系人</label><input class="form-input" id="custContact"></div>
+    <div class="form-group"><label>联系电话</label><input class="form-input" id="custPhone"></div>
+    <div class="form-group"><label>邮箱</label><input class="form-input" id="custEmail"></div>
+    <div class="form-group"><label>信用额度 (USD)</label><input type="number" class="form-input" id="custCredit" value="30000"></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveCustomer()">创建</button>
+  `);
+}
+function saveCustomer() {
+  const name = document.getElementById('custName').value.trim();
+  const contact = document.getElementById('custContact').value.trim();
+  if (!name || !contact) { toast('请填写客户名称和联系人'); return; }
+  const id = 'C' + String(CUSTOMERS.length + 1).padStart(3, '0');
+  CUSTOMERS.push({
+    id, name, contact,
+    phone: document.getElementById('custPhone').value.trim(),
+    email: document.getElementById('custEmail').value.trim(),
+    status: 'active',
+    creditLimit: +document.getElementById('custCredit').value || 30000,
+    registerTime: new Date().toISOString().slice(0,10)
+  });
+  WALLETS[id] = { balance: 0, frozen: 0, currency: 'USD', bills: [], transactions: [] };
+  closeGenericModal();
+  showView('customers');
+  toast('客户创建成功：' + name);
+}
+function viewCustomer(id) {
+  const c = CUSTOMERS.find(x => x.id === id);
+  if (!c) return;
+  const w = WALLETS[id] || { balance:0, frozen:0, bills:[], transactions:[] };
+  const custOrders = ORDERS.filter(o => o.customerId === id);
+  showGenericModal('客户详情 - ' + c.name, `
+    <div class="info-grid">
+      <div class="info-item"><span class="label">客户编号</span><span class="value">${c.id}</span></div>
+      <div class="info-item"><span class="label">状态</span><span class="value">${c.status==='active'?'正常':'冻结'}</span></div>
+      <div class="info-item"><span class="label">联系人</span><span class="value">${c.contact}</span></div>
+      <div class="info-item"><span class="label">电话</span><span class="value">${c.phone}</span></div>
+      <div class="info-item"><span class="label">邮箱</span><span class="value">${c.email}</span></div>
+      <div class="info-item"><span class="label">信用额度</span><span class="value">$${c.creditLimit.toLocaleString()}</span></div>
+      <div class="info-item"><span class="label">账户余额</span><span class="value" style="color:#16a34a;">$${w.balance.toFixed(2)}</span></div>
+      <div class="info-item"><span class="label">冻结金额</span><span class="value">$${w.frozen.toFixed(2)}</span></div>
+      <div class="info-item"><span class="label">订单数</span><span class="value">${custOrders.length}</span></div>
+      <div class="info-item"><span class="label">注册时间</span><span class="value">${c.registerTime}</span></div>
+    </div>
+    <h4 style="margin-top:16px;margin-bottom:8px;">最近订单</h4>
+    ${custOrders.length ? `<table class="data-table"><thead><tr><th>单号</th><th>状态</th><th>费用</th><th>时间</th></tr></thead><tbody>
+      ${custOrders.slice(0,5).map(o => `<tr><td style="color:#667eea;">${o.id}</td><td>${o.status}</td><td>$${o.price}</td><td style="font-size:12px;color:#9ca3af;">${o.createTime}</td></tr>`).join('')}
+    </tbody></table>` : '<div class="empty-state">暂无订单</div>'}
+  `);
+}
+function adjustCredit(id) {
+  const c = CUSTOMERS.find(x => x.id === id);
+  if (!c) return;
+  showGenericModal('调整信用额度 - ' + c.name, `
+    <div class="form-group"><label>当前额度</label><input class="form-input" value="$${c.creditLimit.toLocaleString()}" readonly style="background:#f9fafb;"></div>
+    <div class="form-group"><label>新额度 (USD)</label><input type="number" class="form-input" id="newCredit" value="${c.creditLimit}"></div>
+    <div class="form-group"><label>调整原因</label><textarea class="form-textarea" id="creditReason" placeholder="请说明调整原因"></textarea></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveCredit('${id}')">确认调整</button>
+  `);
+}
+function saveCredit(id) {
+  const c = CUSTOMERS.find(x => x.id === id);
+  const v = +document.getElementById('newCredit').value;
+  if (!v || v < 0) { toast('请输入有效额度'); return; }
+  c.creditLimit = v;
+  closeGenericModal();
+  showView('customers');
+  toast('信用额度已调整为 $' + v.toLocaleString());
+}
+function toggleCustomerStatus(id) {
+  const c = CUSTOMERS.find(x => x.id === id);
+  if (!c) return;
+  showGenericModal(c.status === 'frozen' ? '解冻客户' : '冻结客户', `
+    <div class="alert alert-warn">确认${c.status === 'frozen' ? '解冻' : '冻结'}客户 <b>${c.name}</b>？${c.status === 'frozen' ? '' : '<br>冻结后该客户将无法下单，已有订单不受影响。'}</div>
+    <div class="form-group"><label>操作原因</label><textarea class="form-textarea" id="statusReason" placeholder="请说明原因"></textarea></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="confirmToggleStatus('${id}')">确认</button>
+  `);
+}
+function confirmToggleStatus(id) {
+  const c = CUSTOMERS.find(x => x.id === id);
+  c.status = c.status === 'frozen' ? 'active' : 'frozen';
+  closeGenericModal();
+  showView('customers');
+  toast('客户已' + (c.status === 'frozen' ? '冻结' : '解冻'));
+}
+
+/* ============ Billing Actions ============ */
+function viewBill(billId) {
+  let bill = null, custName = '';
+  for (const c of CUSTOMERS) {
+    const w = WALLETS[c.id];
+    if (w) {
+      const b = w.bills.find(x => x.id === billId);
+      if (b) { bill = b; custName = c.name; break; }
+    }
+  }
+  if (!bill) return;
+  showGenericModal('账单详情 - ' + billId, `
+    <div class="info-grid">
+      <div class="info-item"><span class="label">客户</span><span class="value">${custName}</span></div>
+      <div class="info-item"><span class="label">账期</span><span class="value">${bill.period}</span></div>
+      <div class="info-item"><span class="label">金额</span><span class="value" style="color:#ef4444;font-weight:700;">$${bill.amount.toFixed(2)}</span></div>
+      <div class="info-item"><span class="label">状态</span><span class="value">${bill.status==='paid'?'已支付':'待支付'}</span></div>
+      <div class="info-item"><span class="label">出账时间</span><span class="value">${bill.time}</span></div>
+    </div>
+    <div class="fee-breakdown mt-3">
+      <div class="fee-row"><span class="fee-name">运费小计</span><span class="fee-amt">$${(bill.amount*0.85).toFixed(2)}</span></div>
+      <div class="fee-row"><span class="fee-name">附加服务费</span><span class="fee-amt">$${(bill.amount*0.15).toFixed(2)}</span></div>
+      <div class="fee-row total"><span class="fee-name">应收合计</span><span class="fee-amt">$${bill.amount.toFixed(2)}</span></div>
+    </div>
+  `);
+}
+function sendReminder(billId) {
+  showGenericModal('发送催款通知', `
+    <div class="alert alert-warn">确认向该账单客户发送催款通知？</div>
+    <div class="form-group"><label>催款方式</label>
+      <select class="form-select" id="remindWay"><option>邮件</option><option>短信</option><option>邮件+短信</option></select>
+    </div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="confirmReminder('${billId}')">确认发送</button>
+  `);
+}
+function confirmReminder(billId) {
+  closeGenericModal();
+  toast('催款通知已发送至 ' + billId);
+}
+
+/* ============ Wallet Actions ============ */
+function withdraw() {
+  const w = WALLETS[currentCustomerId];
+  showGenericModal('申请提现', `
+    <div class="alert alert-info">可提现余额：$${w.balance.toFixed(2)}（冻结金额不可提现）</div>
+    <div class="form-group"><label>提现金额 (USD)</label><input type="number" class="form-input" id="wdAmt" value="1000" min="1" max="${w.balance}"></div>
+    <div class="form-group"><label>提现账户</label>
+      <select class="form-select" id="wdAcct"><option>尾号 1234（招商银行）</option><option>尾号 5678（工商银行）</option></select>
+    </div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="confirmWithdraw()">确认提现</button>
+  `);
+}
+function confirmWithdraw() {
+  const amt = +document.getElementById('wdAmt').value;
+  const w = WALLETS[currentCustomerId];
+  if (!amt || amt <= 0 || amt > w.balance) { toast('提现金额无效'); return; }
+  w.balance -= amt;
+  w.transactions.unshift({
+    id: 'TX' + Date.now().toString().slice(-6),
+    type: 'consume', amount: -amt, balance: w.balance,
+    time: new Date().toLocaleString('zh-CN', { hour12: false }),
+    remark: '提现申请'
+  });
+  closeGenericModal();
+  showView('wallet');
+  toast('提现申请已提交，预计 1-3 个工作日到账');
+}
+function exportBills() {
+  const w = WALLETS[currentCustomerId];
+  let csv = '账单号,账期,金额,状态,出账时间\\n';
+  w.bills.forEach(b => { csv += `${b.id},${b.period},${b.amount},${b.status},${b.time}\\n`; });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'bills.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('账单已导出');
+}
+function viewClientBill(billId) {
+  const w = WALLETS[currentCustomerId];
+  const b = w.bills.find(x => x.id === billId);
+  if (!b) return;
+  showGenericModal('账单详情 - ' + billId, `
+    <div class="info-grid">
+      <div class="info-item"><span class="label">账期</span><span class="value">${b.period}</span></div>
+      <div class="info-item"><span class="label">金额</span><span class="value" style="color:#ef4444;">$${b.amount.toFixed(2)}</span></div>
+      <div class="info-item"><span class="label">状态</span><span class="value">${b.status==='paid'?'已支付':'待支付'}</span></div>
+      <div class="info-item"><span class="label">出账时间</span><span class="value">${b.time}</span></div>
+    </div>
+  `, b.status !== 'paid' ? `
+    <button class="btn btn-default" onclick="closeGenericModal()">关闭</button>
+    <button class="btn btn-primary" onclick="payBill('${billId}')">立即支付</button>
+  ` : undefined);
+}
+function payBill(billId) {
+  const w = WALLETS[currentCustomerId];
+  const b = w.bills.find(x => x.id === billId);
+  if (w.balance < b.amount) { toast('余额不足，请先充值'); return; }
+  w.balance -= b.amount;
+  b.status = 'paid';
+  w.transactions.unshift({
+    id: 'TX' + Date.now().toString().slice(-6),
+    type: 'consume', amount: -b.amount, balance: w.balance,
+    time: new Date().toLocaleString('zh-CN', { hour12: false }),
+    remark: `账单 ${billId} 支付`
+  });
+  closeGenericModal();
+  showView('wallet');
+  toast('账单支付成功');
+}
+
+/* ============ Inquiry / Tracking Actions ============ */
+function reInquiry() {
+  showView(currentRole === 'admin' ? 'inquiry' : 'client-inquiry');
+  toast('已跳转至询价页面，请重新填写');
+}
+function goOrder() {
+  showView(currentRole === 'admin' ? 'inquiry' : 'client-inquiry');
+}
+function doTracking() {
+  const val = document.getElementById('trackInput')?.value?.trim();
+  if (!val) { toast('请输入卡车单号或追踪号'); return; }
+  const o = ORDERS.find(x => x.id === val || x.tracking === val);
+  const result = document.getElementById('trackingResult');
+  const body = document.getElementById('trackingResultBody');
+  result.style.display = 'block';
+  if (o) {
+    const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
+    body.innerHTML = `
+      <div class="tracking-map" style="height:200px;margin-bottom:16px;">
+        <div class="tracking-route"></div>
+        <div class="tracking-dot start"></div>
+        <div class="tracking-dot current"></div>
+        <div class="tracking-dot end"></div>
+        <span style="position:absolute;left:8%;bottom:8px;font-size:11px;">${o.from}</span>
+        <span style="position:absolute;right:8%;bottom:8px;font-size:11px;">${o.to}</span>
+      </div>
+      <div class="info-grid">
+        <div class="info-item"><span class="label">卡车单号</span><span class="value" style="color:#667eea;">${o.id}</span></div>
+        <div class="info-item"><span class="label">追踪号</span><span class="value">${o.tracking || '待生成'}</span></div>
+        <div class="info-item"><span class="label">卡司</span><span class="value">${o.carrier}</span></div>
+        <div class="info-item"><span class="label">状态</span><span class="value"><span class="status-pill st-${o.status}">${stMap[o.status]}</span></span></div>
+        <div class="info-item"><span class="label">提货仓</span><span class="value">${o.from}</span></div>
+        <div class="info-item"><span class="label">目的地</span><span class="value">${o.to}</span></div>
+      </div>
+      <div class="timeline mt-3">
+        <div class="timeline-item done"><div class="tl-title">已下单</div><div class="tl-time">${o.createTime}</div><div class="tl-desc">卡车单 ${o.id} 创建成功</div></div>
+        ${o.status !== 'pending' && o.status !== 'failed' ? `<div class="timeline-item done"><div class="tl-title">已提货</div><div class="tl-time">2026-09-27 08:30</div><div class="tl-desc">${o.from} 提货完成</div></div>` : ''}
+        ${['transit','delivered'].includes(o.status) ? `<div class="timeline-item ${o.status==='transit'?'active':'done'}"><div class="tl-title">${o.status==='transit'?'运输中':'已妥投'}</div><div class="tl-time">${o.status==='delivered'?'2026-09-28 14:20':'运输中'}</div><div class="tl-desc">${o.status==='transit'?'当前位置：San Bernardino, CA · 距目的地约 120 英里':'货物已送达 '+o.to}</div></div>` : ''}
+        ${o.status === 'failed' ? `<div class="timeline-item active" style="--dot-color:#ef4444;"><div class="tl-title">下单失败</div><div class="tl-time">${o.createTime}</div><div class="tl-desc">卡司拒单，费用已原路退回</div></div>` : ''}
+      </div>
+      <div class="mt-3"><button class="btn btn-default btn-sm" onclick="openDetail('${o.id}')">查看订单详情 →</button></div>
+    `;
+    toast('查询成功');
+  } else {
+    body.innerHTML = '<div class="empty-state"><div class="icon">🔍</div>未找到该单号的物流信息，请确认单号是否正确</div>';
+    toast('未找到相关物流信息');
+  }
+}
+
+/* ============ Order Detail Actions ============ */
+function contactService() {
+  showGenericModal('联系客服', `
+    <div class="form-group"><label>问题类型</label>
+      <select class="form-select" id="svcType"><option>物流查询</option><option>费用咨询</option><option>异常售后</option><option>其他</option></select>
+    </div>
+    <div class="form-group"><label>问题描述</label><textarea class="form-textarea" id="svcDesc" placeholder="请描述您的问题"></textarea></div>
+  `, `
+    <button class="btn btn-default" onclick="closeGenericModal()">取消</button>
+    <button class="btn btn-primary" onclick="submitService()">提交</button>
+  `);
+}
+function submitService() {
+  const desc = document.getElementById('svcDesc').value.trim();
+  if (!desc) { toast('请填写问题描述'); return; }
+  closeGenericModal();
+  toast('客服工单已提交，将在 30 分钟内响应');
+}
+function viewAttachments() {
+  const o = ORDERS.find(x => x.id === currentOrderId);
+  if (!o) return;
+  const atts = [
+    { name: 'BOL.pdf', type: 'PDF', size: '128 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'PL.pdf', type: 'PDF', size: '92 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'PalletLabel.pdf', type: 'PDF', size: '86 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'POD.pdf', type: 'PDF', size: '210 KB', ready: o.status === 'delivered' },
+  ];
+  showGenericModal('订单附件', `
+    <div class="attach-list">
+      ${atts.map(a => `
+        <div class="attach-item" onclick="${a.ready ? `toast('开始下载 ${a.name}')` : `toast('附件未生成')`}">
+          <div class="attach-icon">📄</div>
+          <div class="attach-info"><div class="at-name">${a.name}</div><div class="at-meta">${a.type} · ${a.size} · ${a.ready ? '可下载' : '未生成'}</div></div>
+        </div>
+      `).join('')}
+    </div>
+  `);
 }
 
 /* ============ Utils ============ */
