@@ -62,7 +62,7 @@
   .card-header h3 { font-size: 15px; font-weight: 600; }
   .card-body { padding: 20px; }
 
-  /* Form grid */
+  /* Form */
   .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
   .form-grid .full { grid-column: 1 / -1; }
@@ -73,6 +73,23 @@
   .form-textarea { resize: vertical; min-height: 70px; }
   .form-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
   .form-hint.warn { color: #f59e0b; }
+
+  /* Radio pills (transport mode) */
+  .radio-pills { display: flex; gap: 10px; }
+  .radio-pill { flex: 1; padding: 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all .2s; }
+  .radio-pill.active { border-color: #667eea; background: #eef2ff; }
+  .radio-pill .rp-name { font-weight: 600; font-size: 13px; }
+  .radio-pill .rp-code { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .radio-pill .rp-desc { font-size: 10px; color: #9ca3af; margin-top: 3px; }
+
+  /* Goods table */
+  .goods-table { width: 100%; border-collapse: collapse; }
+  .goods-table th { background: #f9fafb; padding: 10px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  .goods-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+  .goods-table input { width: 100%; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 12px; }
+  .goods-table input:focus { border-color: #667eea; outline: none; }
+  .goods-table .col-act { width: 40px; text-align: center; }
+  .btn-remove { background: #fee2e2; color: #dc2626; border: none; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; font-size: 14px; }
 
   /* Checkbox group */
   .checkbox-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -103,9 +120,13 @@
   .price { font-size: 18px; font-weight: 700; color: #ef4444; }
   .price small { font-size: 12px; font-weight: 400; color: #6b7280; }
   .transit { color: #16a34a; font-weight: 500; }
+  .fee-detail { font-size: 11px; color: #6b7280; margin-top: 4px; line-height: 1.5; }
+  .fee-detail span { display: inline-block; margin-right: 8px; }
+  .fee-detail .base { color: #374151; }
+  .fee-detail .acc { color: #d97706; }
 
   /* Order list */
-  .status-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #fff; padding: 6px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); width: fit-content; }
+  .status-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #fff; padding: 6px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); width: fit-content; flex-wrap: wrap; }
   .status-tab { padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #6b7280; transition: all .2s; }
   .status-tab:hover { color: #1f2937; }
   .status-tab.active { background: #667eea; color: #fff; }
@@ -154,7 +175,7 @@
   .attach-info .at-name { font-weight: 500; font-size: 13px; }
   .attach-info .at-meta { font-size: 11px; color: #9ca3af; }
 
-  /* Tracking map mock */
+  /* Tracking map */
   .tracking-map { height: 180px; background: linear-gradient(135deg, #e0f2fe, #ede9fe); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 13px; position: relative; overflow: hidden; }
   .tracking-route { position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: #667eea; }
   .tracking-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: #16a34a; border: 3px solid #fff; box-shadow: 0 0 0 2px #16a34a; }
@@ -162,10 +183,21 @@
   .tracking-dot.end { left: 90%; background: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
   .tracking-dot.current { left: 55%; background: #667eea; box-shadow: 0 0 0 2px #667eea; animation: pulse 2s infinite; }
 
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .stat-card .stat-label { font-size: 13px; color: #6b7280; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #1f2937; }
+  .stat-card .stat-sub { font-size: 12px; color: #16a34a; margin-top: 4px; }
+  .stat-card.primary .stat-value { color: #667eea; }
+  .stat-card.success .stat-value { color: #16a34a; }
+  .stat-card.warn .stat-value { color: #f59e0b; }
+  .stat-card.danger .stat-value { color: #ef4444; }
+
   /* Misc */
   .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
   .toolbar .search { display: flex; gap: 8px; }
   .toolbar .search input { width: 260px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; }
   .toolbar .search input:focus { border-color: #667eea; }
@@ -198,6 +230,14 @@
   /* Toast */
   .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 2000; opacity: 0; transition: opacity .3s; pointer-events: none; }
   .toast.show { opacity: 1; }
+
+  /* Fee breakdown */
+  .fee-breakdown { background: #f9fafb; border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .fee-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .fee-row .fee-name { color: #6b7280; }
+  .fee-row .fee-amt { color: #1f2937; font-weight: 500; }
+  .fee-row.total { border-top: 1px solid #e5e7eb; margin-top: 6px; padding-top: 8px; font-weight: 700; }
+  .fee-row.total .fee-amt { color: #ef4444; font-size: 16px; }
 </style>
 </head>
 <body>
@@ -228,7 +268,6 @@
 <!-- ===================== APP ===================== -->
 <div id="app" class="app">
   <div class="app-layout">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo-icon">🚚</div>
@@ -239,13 +278,18 @@
         <div class="menu-item active" data-view="inquiry"><span class="icon">📋</span>卡派询价</div>
         <div class="menu-item" data-view="orders"><span class="icon">📦</span>卡派订单</div>
         <div class="menu-item" data-view="tracking"><span class="icon">📍</span>物流跟踪</div>
-        <div class="menu-group">系统</div>
+        <div class="menu-group">基础数据</div>
+        <div class="menu-item" data-view="addressbook"><span class="icon">📒</span>地址簿</div>
         <div class="menu-item" data-view="carriers"><span class="icon">🚛</span>卡司管理</div>
+        <div class="menu-group">运营</div>
+        <div class="menu-item" data-view="billing"><span class="icon">💰</span>费用结算</div>
+        <div class="menu-item" data-view="dashboard"><span class="icon">📊</span>数据看板</div>
+        <div class="menu-item" data-view="claims"><span class="icon">⚠️</span>异常售后</div>
+        <div class="menu-group">系统</div>
         <div class="menu-item" onclick="logout()"><span class="icon">🚪</span>退出登录</div>
       </nav>
     </aside>
 
-    <!-- Main -->
     <div class="main">
       <header class="topbar">
         <div class="breadcrumb"><span id="bcTitle">卡派询价</span></div>
@@ -254,15 +298,11 @@
           <div class="avatar">运</div>
         </div>
       </header>
-
-      <main class="content" id="content">
-        <!-- views injected here -->
-      </main>
+      <main class="content" id="content"></main>
     </div>
   </div>
 </div>
 
-<!-- Order confirm modal -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal">
     <div class="modal-header">确认下单</div>
@@ -279,18 +319,27 @@
 <script>
 /* ============ Mock Data ============ */
 const CARRIERS = [
-  { name: 'YQN-Transport', type: 'yqn', price: 385, transit: 2, features: '自营车队·亚马逊认证' },
-  { name: 'CEVA', type: 'agent', price: 412, transit: 3, features: 'YQN代理卡司' },
-  { name: 'FedEx Freight', type: '3p', price: 458, transit: 4, features: '三方代理' },
-  { name: 'XPO Logistics', type: '3p', price: 399, transit: 5, features: '三方代理·时效不保障' },
+  { name: 'YQN-Transport', type: 'yqn', base: 320, transit: 2, features: '自营车队·亚马逊认证' },
+  { name: 'CEVA', type: 'agent', base: 345, transit: 3, features: 'YQN代理卡司' },
+  { name: 'FedEx Freight', type: '3p', base: 380, transit: 4, features: '三方代理' },
+  { name: 'XPO Logistics', type: '3p', base: 335, transit: 5, features: '三方代理·时效不保障' },
 ];
 
 let ORDERS = [
-  { id: 'TK20260926001', status: 'transit', from: 'YQN-LA仓', to: 'Amazon LAX9', carrier: 'YQN-Transport', price: 385, pallets: 1, createTime: '2026-09-26 09:15', tracking: '6002389145' },
-  { id: 'TK20260926002', status: 'pickup', from: 'YQN-LA仓', to: '123 Commerce St, CA', carrier: 'CEVA', price: 412, pallets: 2, createTime: '2026-09-26 10:30', tracking: '' },
-  { id: 'TK20260925008', status: 'delivered', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'YQN-Transport', price: 520, pallets: 3, createTime: '2026-09-25 14:00', tracking: '6002389012' },
-  { id: 'TK20260925007', status: 'pending', from: '外部仓-CA', to: 'Amazon LAX9', carrier: 'FedEx Freight', price: 458, pallets: 1, createTime: '2026-09-25 16:20', tracking: '' },
-  { id: 'TK20260924015', status: 'failed', from: 'YQN-LA仓', to: 'Residential, CA', carrier: 'XPO Logistics', price: 399, pallets: 1, createTime: '2026-09-24 11:00', tracking: '' },
+  { id: 'TK20260926001', status: 'transit', from: 'YQN-LA仓', to: 'Amazon LAX9', carrier: 'YQN-Transport', base:320, acc:65, price: 385, pallets: 1, mode:'LTL', goods:[{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}], createTime: '2026-09-26 09:15', tracking: '6002389145' },
+  { id: 'TK20260926002', status: 'pickup', from: 'YQN-LA仓', to: '123 Commerce St, CA', carrier: 'CEVA', base:345, acc:67, price: 412, pallets: 2, mode:'LTL', goods:[{sku:'SKU-B012',name:'户外折叠椅',hs:'940171',qty:20,weight:240}], createTime: '2026-09-26 10:30', tracking: '' },
+  { id: 'TK20260925008', status: 'delivered', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'YQN-Transport', base:430, acc:90, price: 520, pallets: 3, mode:'LTL', goods:[{sku:'SKU-C023',name:'厨房刀具套装',hs:'821490',qty:100,weight:320}], createTime: '2026-09-25 14:00', tracking: '6002389012' },
+  { id: 'TK20260925007', status: 'pending', from: '外部仓-CA', to: 'Amazon LAX9', carrier: 'FedEx Freight', base:380, acc:78, price: 458, pallets: 1, mode:'LTL', goods:[{sku:'SKU-D034',name:'智能台灯',hs:'940520',qty:30,weight:88}], createTime: '2026-09-25 16:20', tracking: '' },
+  { id: 'TK20260924015', status: 'failed', from: 'YQN-LA仓', to: 'Residential, CA', carrier: 'XPO Logistics', base:335, acc:64, price: 399, pallets: 1, mode:'LTL', goods:[{sku:'SKU-E045',name:'瑜伽垫',hs:'950691',qty:40,weight:60}], createTime: '2026-09-24 11:00', tracking: '' },
+];
+
+const ADDRESS_BOOK = [
+  { name: 'Amazon LAX9', type: 'FBA仓库', address: '12345 Delivery Way, San Bernardino, CA 92374', phone: '' },
+  { name: 'Amazon EWR4', type: 'FBA仓库', address: '280 Marigold Ct, Edison, NJ 08817', phone: '' },
+  { name: 'YQN-LA仓', type: '自有仓', address: '5600 Bandini Blvd, Los Angeles, CA 90040', phone: '+1 213-555-0100' },
+  { name: 'YQN-NY仓', type: '自有仓', address: '100 Industrial Ave, Newark, NJ 07114', phone: '+1 973-555-0188' },
+  { name: 'ABC Trading Inc.', type: '商业客户', address: '789 Market St, San Francisco, CA 94103', phone: '+1 415-555-0123' },
+  { name: 'John Smith (住宅)', type: '住宅地址', address: '456 Oak Ave, Pasadena, CA 91101', phone: '+1 626-555-0199' },
 ];
 
 let currentView = 'inquiry';
@@ -321,14 +370,11 @@ document.querySelectorAll('.menu-item[data-view]').forEach(item => {
 
 function showView(view) {
   currentView = view;
-  const titles = { inquiry: '卡派询价', orders: '卡派订单', tracking: '物流跟踪', carriers: '卡司管理', detail: '订单详情' };
+  const titles = { inquiry: '卡派询价', orders: '卡派订单', tracking: '物流跟踪', detail: '订单详情', addressbook: '地址簿', carriers: '卡司管理', billing: '费用结算', dashboard: '数据看板', claims: '异常售后' };
   document.getElementById('bcTitle').textContent = titles[view] || '';
   const content = document.getElementById('content');
-  if (view === 'inquiry') content.innerHTML = renderInquiry();
-  else if (view === 'orders') content.innerHTML = renderOrders();
-  else if (view === 'detail') content.innerHTML = renderDetail(currentOrderId);
-  else if (view === 'tracking') content.innerHTML = renderTracking();
-  else if (view === 'carriers') content.innerHTML = renderCarriers();
+  const renderers = { inquiry: renderInquiry, orders: renderOrders, detail: () => renderDetail(currentOrderId), tracking: renderTracking, addressbook: renderAddressBook, carriers: renderCarriers, billing: renderBilling, dashboard: renderDashboard, claims: renderClaims };
+  content.innerHTML = (renderers[view] || (() => ''))();
   bindInquiryEvents();
 }
 
@@ -336,9 +382,33 @@ function showView(view) {
 function renderInquiry() {
   return `
   <h1 class="page-title">卡派询价</h1>
-  <p class="page-desc">支持 YQN 仓及其他海外仓提货，Business / Residential 派送</p>
+  <p class="page-desc">支持 YQN 仓及其他海外仓提货，Business / Residential 派送，LTL/FTL/PTL 运输方式</p>
 
-  <div class="alert alert-info">💡 提示：YQN 仓库发货需先在 ERP 建发货单，状态为「已配货」才可询价，发货方式须为 LTL。</div>
+  <div class="alert alert-info">💡 YQN 仓库发货需先在 ERP 建发货单，状态为「已配货」才可询价，发货方式须为 LTL。</div>
+
+  <!-- 运输方式 -->
+  <div class="card">
+    <div class="card-header"><h3>运输方式</h3></div>
+    <div class="card-body">
+      <div class="radio-pills">
+        <div class="radio-pill active" data-mode="LTL" onclick="selectMode(this)">
+          <div class="rp-name">零担运输</div>
+          <div class="rp-code">LTL</div>
+          <div class="rp-desc">不足整车，按托盘/重量计费</div>
+        </div>
+        <div class="radio-pill" data-mode="FTL" onclick="selectMode(this)">
+          <div class="rp-name">整车运输</div>
+          <div class="rp-code">FTL</div>
+          <div class="rp-desc">独占整车，时效快、货损低</div>
+        </div>
+        <div class="radio-pill" data-mode="PTL" onclick="selectMode(this)">
+          <div class="rp-name">部分整车</div>
+          <div class="rp-code">PTL</div>
+          <div class="rp-desc">介于 LTL 与 FTL 之间</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 提货信息 -->
   <div class="card">
@@ -409,6 +479,45 @@ function renderInquiry() {
     </div>
   </div>
 
+  <!-- 商品信息 -->
+  <div class="card">
+    <div class="card-header">
+      <h3>商品信息</h3>
+      <button class="btn btn-default btn-sm" onclick="addGoodsRow()">+ 添加商品</button>
+    </div>
+    <div class="card-body" style="padding:12px;">
+      <table class="goods-table" id="goodsTable">
+        <thead>
+          <tr>
+            <th style="width:120px">SKU</th>
+            <th>品名</th>
+            <th style="width:100px">HS Code</th>
+            <th style="width:80px">数量</th>
+            <th style="width:90px">单件重(lbs)</th>
+            <th style="width:100px">单件尺寸(in)</th>
+            <th style="width:100px">申报价值($)</th>
+            <th style="width:60px">危险品</th>
+            <th class="col-act"></th>
+          </tr>
+        </thead>
+        <tbody id="goodsBody">
+          <tr>
+            <td><input value="SKU-A001"></td>
+            <td><input value="无线蓝牙耳机"></td>
+            <td><input value="851830"></td>
+            <td><input type="number" value="50"></td>
+            <td><input type="number" value="3.2"></td>
+            <td><input value="6×4×2"></td>
+            <td><input type="number" value="15.00"></td>
+            <td style="text-align:center"><input type="checkbox"></td>
+            <td class="col-act"><button class="btn-remove" onclick="removeGoodsRow(this)">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="form-hint mt-3">⚠️ 危险品（DG）货物需提前申报，部分卡司拒收；申报价值用于保险理赔与清关参考。</div>
+    </div>
+  </div>
+
   <!-- 打托信息 -->
   <div class="card">
     <div class="card-header"><h3>打托信息</h3></div>
@@ -463,48 +572,12 @@ function renderInquiry() {
     <div class="card-header"><h3>发货增值服务</h3><span style="font-size:12px;color:#9ca3af;">不勾选则不提供相应服务</span></div>
     <div class="card-body">
       <div class="checkbox-group">
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">Inside</div>
-            <div class="cb-desc">司机将货物送至车库或前门</div>
-          </div>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">lift-gate</div>
-            <div class="cb-desc">尾板装卸，无卸货能力时必选</div>
-          </div>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">APPT</div>
-            <div class="cb-desc">派送前电话预约派送时间</div>
-          </div>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">ROC</div>
-            <div class="cb-desc">货物放至客户指定房间内</div>
-          </div>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">WGD 白手套</div>
-            <div class="cb-desc">入室+拆包装+清垃圾，仅支持 metro</div>
-          </div>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" class="vas">
-          <div>
-            <div class="cb-label">NSR</div>
-            <div class="cb-desc">住宅地址+卡司为 CEVA 时免签收</div>
-          </div>
-        </label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="0"><div><div class="cb-label">Inside</div><div class="cb-desc">司机将货物送至车库或前门</div></div></label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="45"><div><div class="cb-label">lift-gate</div><div class="cb-desc">尾板装卸，无卸货能力时必选</div></div></label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="35"><div><div class="cb-label">APPT</div><div class="cb-desc">派送前电话预约派送时间</div></div></label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="120"><div><div class="cb-label">ROC</div><div class="cb-desc">货物放至客户指定房间内</div></div></label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="180"><div><div class="cb-label">WGD 白手套</div><div class="cb-desc">入室+拆包装+清垃圾，仅 metro</div></div></label>
+        <label class="checkbox-item"><input type="checkbox" class="vas" data-fee="25"><div><div class="cb-label">NSR</div><div class="cb-desc">住宅地址+卡司为 CEVA 时免签收</div></div></label>
       </div>
     </div>
   </div>
@@ -520,23 +593,8 @@ function renderInquiry() {
     <div class="card">
       <div class="card-body" style="padding:0">
         <table class="quote-table">
-          <thead>
-            <tr>
-              <th>卡司</th><th>类型</th><th>参考时效</th><th>报价</th><th>说明</th><th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${CARRIERS.map((c, i) => `
-              <tr>
-                <td><div class="carrier">${c.name} ${c.type==='yqn'?'<span class="tag" style="background:#dcfce7;color:#16a34a;">自营</span>':''}</div></td>
-                <td><span class="carrier-badge badge-${c.type}">${c.type==='yqn'?'自营车队':c.type==='agent'?'YQN代理':'三方代理'}</span></td>
-                <td><span class="transit">${c.transit} 天</span></td>
-                <td><div class="price">$${c.price} <small>/票</small></div></td>
-                <td style="color:#6b7280;font-size:12px;">${c.features}</td>
-                <td><button class="btn btn-primary btn-sm" onclick="placeOrder(${i})">下单</button></td>
-              </tr>
-            `).join('')}
-          </tbody>
+          <thead><tr><th>卡司</th><th>类型</th><th>参考时效</th><th>报价</th><th>说明</th><th>操作</th></tr></thead>
+          <tbody id="quoteBody"></tbody>
         </table>
       </div>
     </div>
@@ -568,33 +626,91 @@ function toggleWhFields() {
   document.getElementById('extPickupFields').style.display = v === 'external' ? 'block' : 'none';
 }
 
+function selectMode(el) {
+  document.querySelectorAll('.radio-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
 function selectPalletType(el) {
   document.querySelectorAll('.pallet-type').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
+}
+
+/* 商品行增删 */
+function addGoodsRow() {
+  const tbody = document.getElementById('goodsBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input></td><td><input></td><td><input></td>
+    <td><input type="number" value="1"></td><td><input type="number" value="0"></td>
+    <td><input></td><td><input type="number" value="0"></td>
+    <td style="text-align:center"><input type="checkbox"></td>
+    <td class="col-act"><button class="btn-remove" onclick="removeGoodsRow(this)">×</button></td>`;
+  tbody.appendChild(tr);
+}
+function removeGoodsRow(btn) {
+  const tbody = document.getElementById('goodsBody');
+  if (tbody.children.length > 1) btn.closest('tr').remove();
+  else toast('至少保留一行商品');
+}
+
+function calcAccessorialFee() {
+  let total = 0;
+  document.querySelectorAll('.vas:checked').forEach(cb => { total += +cb.dataset.fee; });
+  return total;
 }
 
 function doInquiry() {
   const len = +document.getElementById('pLen').value;
   const qty = +document.getElementById('pQty').value;
   if (len <= 0 || qty <= 0) { toast('请填写有效的尺寸和数量'); return; }
+  const acc = calcAccessorialFee();
+  const body = document.getElementById('quoteBody');
+  body.innerHTML = CARRIERS.map((c, i) => {
+    const total = c.base + acc;
+    return `<tr>
+      <td><div class="carrier">${c.name} ${c.type==='yqn'?'<span class="tag" style="background:#dcfce7;color:#16a34a;">自营</span>':''}</div></td>
+      <td><span class="carrier-badge badge-${c.type}">${c.type==='yqn'?'自营车队':c.type==='agent'?'YQN代理':'三方代理'}</span></td>
+      <td><span class="transit">${c.transit} 天</span></td>
+      <td>
+        <div class="price">$${total} <small>/票</small></div>
+        <div class="fee-detail">
+          <span class="base">基础 $${c.base}</span>
+          <span class="acc">附加 $${acc}</span>
+        </div>
+      </td>
+      <td style="color:#6b7280;font-size:12px;">${c.features}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="placeOrder(${i}, ${total})">下单</button></td>
+    </tr>`;
+  }).join('');
   document.getElementById('quoteResult').style.display = 'block';
   document.getElementById('quoteResult').scrollIntoView({ behavior: 'smooth' });
   toast('询价成功，已获取 ' + CARRIERS.length + ' 家卡司报价');
 }
 
 /* ============ Place Order ============ */
-function placeOrder(idx) {
-  selectedQuote = CARRIERS[idx];
+function placeOrder(idx, total) {
+  selectedQuote = { ...CARRIERS[idx], total };
+  const goodsRows = document.querySelectorAll('#goodsBody tr');
+  const goods = Array.from(goodsRows).map(tr => {
+    const inputs = tr.querySelectorAll('input');
+    return { sku: inputs[0].value, name: inputs[1].value, hs: inputs[2].value, qty: inputs[3].value, weight: inputs[4].value };
+  });
   const body = document.getElementById('confirmBody');
   body.innerHTML = `
     <div class="alert alert-info">下单后不可修改收发货邮编、打托数据、提货日期，如需修改请重新询价。</div>
     <div class="info-grid">
       <div class="info-item"><span class="label">卡司</span><span class="value">${selectedQuote.name}</span></div>
-      <div class="info-item"><span class="label">报价</span><span class="value" style="color:#ef4444;font-weight:700;">$${selectedQuote.price}</span></div>
+      <div class="info-item"><span class="label">总价</span><span class="value" style="color:#ef4444;font-weight:700;">$${total}</span></div>
       <div class="info-item"><span class="label">参考时效</span><span class="value">${selectedQuote.transit} 天</span></div>
-      <div class="info-item"><span class="label">收货地址</span><span class="value" style="font-size:12px;">12345 Delivery Way, San...</span></div>
-      <div class="info-item"><span class="label">打托类型</span><span class="value">CARTONS（不打托）</span></div>
-      <div class="info-item"><span class="label">件数</span><span class="value">2 件</span></div>
+      <div class="info-item"><span class="label">运输方式</span><span class="value">LTL</span></div>
+      <div class="info-item"><span class="label">商品</span><span class="value">${goods.map(g=>g.sku).join(', ')}</span></div>
+      <div class="info-item"><span class="label">件数</span><span class="value">${goods.reduce((s,g)=>s+(+g.qty||0),0)} 件</span></div>
+    </div>
+    <div class="fee-breakdown mt-3">
+      <div class="fee-row"><span class="fee-name">基础运费</span><span class="fee-amt">$${selectedQuote.base}</span></div>
+      <div class="fee-row"><span class="fee-name">增值服务费</span><span class="fee-amt">$${total - selectedQuote.base}</span></div>
+      <div class="fee-row total"><span class="fee-name">合计</span><span class="fee-amt">$${total}</span></div>
     </div>
   `;
   document.getElementById('confirmModal').classList.add('active');
@@ -606,7 +722,9 @@ function submitOrder() {
   const newId = 'TK' + Date.now().toString().slice(-10);
   ORDERS.unshift({
     id: newId, status: 'pending', from: 'YQN-LA仓', to: 'Amazon LAX9',
-    carrier: selectedQuote.name, price: selectedQuote.price, pallets: 1,
+    carrier: selectedQuote.name, base: selectedQuote.base, acc: selectedQuote.total - selectedQuote.base,
+    price: selectedQuote.total, pallets: 1, mode: 'LTL',
+    goods: [{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}],
     createTime: new Date().toLocaleString('zh-CN', { hour12: false }), tracking: ''
   });
   toast('下单成功！请等待 5 分钟后到卡车单列表查看');
@@ -630,8 +748,8 @@ function renderOrders() {
   ];
   const counts = {};
   statuses.forEach(s => counts[s.key] = ORDERS.filter(o => s.key === 'all' || o.status === s.key).length);
-
-  const list = ORDERS.filter(o => currentStatus === 'all' || o.status === currentStatus);
+  const list = ORDERS.filter(o => currentStatus === 'all' || o.status === o.status);
+  const filtered = currentStatus === 'all' ? ORDERS : ORDERS.filter(o => o.status === currentStatus);
   const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
 
   return `
@@ -639,63 +757,46 @@ function renderOrders() {
   <p class="page-desc">下单后等待 5 分钟，到卡车列表查看是否下单成功</p>
 
   <div class="status-tabs">
-    ${statuses.map(s => `
-      <div class="status-tab ${currentStatus===s.key?'active':''}" onclick="filterStatus('${s.key}')">
-        ${s.label}<span class="count">${counts[s.key]}</span>
-      </div>
-    `).join('')}
+    ${statuses.map(s => `<div class="status-tab ${currentStatus===s.key?'active':''}" onclick="filterStatus('${s.key}')">${s.label}<span class="count">${counts[s.key]}</span></div>`).join('')}
   </div>
 
   <div class="toolbar">
     <div class="search">
-      <input placeholder="搜索卡车单号 / 收发货地址">
+      <input placeholder="搜索卡车单号 / 收发货地址 / SKU">
       <select class="form-select" style="width:auto;">
         <option>全部仓库</option><option>YQN-LA仓</option><option>YQN-NY仓</option>
       </select>
     </div>
-    <div>
-      <button class="btn btn-default btn-sm">导出</button>
-    </div>
+    <div><button class="btn btn-default btn-sm">导出</button></div>
   </div>
 
   <table class="data-table">
-    <thead>
-      <tr>
-        <th>卡车单号</th><th>状态</th><th>提货仓</th><th>目的地</th>
-        <th>卡司</th><th>托盘数</th><th>费用</th><th>创建时间</th><th>操作</th>
-      </tr>
-    </thead>
+    <thead><tr><th>卡车单号</th><th>状态</th><th>提货仓</th><th>目的地</th><th>卡司</th><th>方式</th><th>托盘</th><th>费用</th><th>创建时间</th><th>操作</th></tr></thead>
     <tbody>
-      ${list.map(o => `
+      ${filtered.map(o => `
         <tr onclick="openDetail('${o.id}')">
           <td class="order-no">${o.id}</td>
           <td><span class="status-pill st-${o.status}">${stMap[o.status]}</span></td>
           <td>${o.from}</td>
-          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.to}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.to}</td>
           <td>${o.carrier}</td>
+          <td><span class="tag">${o.mode}</span></td>
           <td>${o.pallets}</td>
           <td style="color:#ef4444;font-weight:600;">$${o.price}</td>
           <td style="color:#6b7280;font-size:12px;">${o.createTime}</td>
           <td><span class="btn-ghost" onclick="event.stopPropagation();openDetail('${o.id}')">详情</span></td>
         </tr>
       `).join('')}
-      ${list.length === 0 ? `<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
+      ${filtered.length === 0 ? `<tr><td colspan="10"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
     </tbody>
   </table>
   `;
 }
-
-function filterStatus(s) {
-  currentStatus = s;
-  showView('orders');
-}
+function filterStatus(s) { currentStatus = s; showView('orders'); }
 
 /* ============ Order Detail ============ */
 let currentOrderId = null;
-function openDetail(id) {
-  currentOrderId = id;
-  showView('detail');
-}
+function openDetail(id) { currentOrderId = id; showView('detail'); }
 
 function renderDetail(id) {
   const o = ORDERS.find(x => x.id === id);
@@ -712,21 +813,33 @@ function renderDetail(id) {
 
   const attachments = [
     { name: 'BOL.pdf', type: 'PDF', size: '128 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'PL.pdf', type: 'PDF', size: '92 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
     { name: 'PalletLabel.pdf', type: 'PDF', size: '86 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
     { name: 'POD.pdf', type: 'PDF', size: '210 KB', ready: o.status === 'delivered' },
   ];
 
   return `
   <button class="btn btn-default btn-sm" onclick="showView('orders')" style="margin-bottom:16px;">← 返回列表</button>
-
   <div class="detail-header">
     <div>
       <div class="detail-title">卡车单 ${o.id}</div>
-      <div class="detail-meta">创建时间：${o.createTime} · <span class="status-pill st-${o.status}">${stMap[o.status]}</span></div>
+      <div class="detail-meta">创建时间：${o.createTime} · <span class="status-pill st-${o.status}">${stMap[o.status]}</span> · <span class="tag">${o.mode}</span></div>
     </div>
     <div class="flex gap-2">
       <button class="btn btn-default btn-sm">联系客服</button>
       <button class="btn btn-primary btn-sm">查看附件</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>商品信息</h3></div>
+    <div class="card-body" style="padding:12px;">
+      <table class="goods-table">
+        <thead><tr><th>SKU</th><th>品名</th><th>HS Code</th><th>数量</th><th>单件重(lbs)</th></tr></thead>
+        <tbody>
+          ${(o.goods||[]).map(g => `<tr><td>${g.sku}</td><td>${g.name}</td><td>${g.hs}</td><td>${g.qty}</td><td>${g.weight}</td></tr>`).join('')}
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -738,10 +851,15 @@ function renderDetail(id) {
         <div class="info-item"><span class="label">费用</span><span class="value" style="color:#ef4444;">$${o.price}</span></div>
         <div class="info-item"><span class="label">提货仓库</span><span class="value">${o.from}</span></div>
         <div class="info-item"><span class="label">目的地</span><span class="value">${o.to}</span></div>
-        <div class="info-item"><span class="label">打托类型</span><span class="value">CARTONS</span></div>
+        <div class="info-item"><span class="label">运输方式</span><span class="value">${o.mode}</span></div>
         <div class="info-item"><span class="label">托盘数</span><span class="value">${o.pallets}</span></div>
         <div class="info-item"><span class="label">追踪号</span><span class="value" style="color:#667eea;">${o.tracking || '待生成'}</span></div>
         <div class="info-item"><span class="label">增值服务</span><span class="value">lift-gate, APPT</span></div>
+      </div>
+      <div class="fee-breakdown mt-3">
+        <div class="fee-row"><span class="fee-name">基础运费</span><span class="fee-amt">$${o.base}</span></div>
+        <div class="fee-row"><span class="fee-name">增值服务费</span><span class="fee-amt">$${o.acc}</span></div>
+        <div class="fee-row total"><span class="fee-name">合计</span><span class="fee-amt">$${o.price}</span></div>
       </div>
     </div>
   </div>
@@ -749,43 +867,30 @@ function renderDetail(id) {
   <div class="card">
     <div class="card-header"><h3>物流轨迹</h3></div>
     <div class="card-body">
-      ${o.status === 'transit' || o.status === 'delivered' ? `
+      ${['transit','delivered'].includes(o.status) ? `
         <div class="tracking-map mb-3">
           <div class="tracking-route"></div>
-          <div class="tracking-dot start" title="提货地"></div>
-          <div class="tracking-dot current" title="当前位置"></div>
-          <div class="tracking-dot end" title="目的地"></div>
+          <div class="tracking-dot start"></div>
+          <div class="tracking-dot current"></div>
+          <div class="tracking-dot end"></div>
           <span style="position:absolute;left:8%;bottom:8px;font-size:11px;">${o.from}</span>
           <span style="position:absolute;right:8%;bottom:8px;font-size:11px;">${o.to}</span>
-        </div>
-      ` : ''}
+        </div>` : ''}
       <div class="timeline">
-        ${timeline.map(t => `
-          <div class="timeline-item ${t.state}">
-            <div class="tl-title">${t.t}</div>
-            <div class="tl-time">${t.time || '—'}</div>
-            <div class="tl-desc">${t.desc}</div>
-          </div>
-        `).join('')}
+        ${timeline.map(t => `<div class="timeline-item ${t.state}"><div class="tl-title">${t.t}</div><div class="tl-time">${t.time || '—'}</div><div class="tl-desc">${t.desc}</div></div>`).join('')}
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-header"><h3>附件</h3>
-      <span style="font-size:12px;color:#9ca3af;">YQN 仓提货附件自动带入发货单，外仓需手动下载</span>
-    </div>
+    <div class="card-header"><h3>附件</h3><span style="font-size:12px;color:#9ca3af;">YQN 仓提货附件自动带入发货单，外仓需手动下载</span></div>
     <div class="card-body">
       <div class="attach-list">
         ${attachments.map(a => `
           <div class="attach-item" onclick="${a.ready ? `toast('开始下载 ${a.name}')` : `toast('附件未生成')`}">
             <div class="attach-icon">📄</div>
-            <div class="attach-info">
-              <div class="at-name">${a.name}</div>
-              <div class="at-meta">${a.type} · ${a.size} · ${a.ready ? '可下载' : '未生成'}</div>
-            </div>
-          </div>
-        `).join('')}
+            <div class="attach-info"><div class="at-name">${a.name}</div><div class="at-meta">${a.type} · ${a.size} · ${a.ready ? '可下载' : '未生成'}</div></div>
+          </div>`).join('')}
       </div>
     </div>
   </div>
@@ -800,8 +905,7 @@ function renderDetail(id) {
       </div>
       <button class="btn btn-default btn-sm mt-3" onclick="toast('正在跳转卡司官网查询...')">前往卡司官网查询 →</button>
     </div>
-  </div>
-  ` : ''}
+  </div>` : ''}
   `;
 }
 
@@ -837,11 +941,40 @@ function renderTracking() {
   `;
 }
 
+/* ============ Address Book ============ */
+function renderAddressBook() {
+  const typeColor = { 'FBA仓库': 'st-delivered', '自有仓': 'st-transit', '商业客户': 'st-pickup', '住宅地址': 'st-pending' };
+  return `
+  <div class="toolbar">
+    <h1 class="page-title" style="margin:0;">地址簿</h1>
+    <button class="btn btn-primary btn-sm" onclick="toast('新建地址功能演示')">+ 新建地址</button>
+  </div>
+  <p class="page-desc">常用收发货地址、亚马逊 FBA 仓地址库</p>
+  <div class="card">
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>名称</th><th>类型</th><th>地址</th><th>电话</th><th>操作</th></tr></thead>
+        <tbody>
+          ${ADDRESS_BOOK.map(a => `
+            <tr>
+              <td style="font-weight:500;">${a.name}</td>
+              <td><span class="status-pill ${typeColor[a.type]||'st-pending'}">${a.type}</span></td>
+              <td>${a.address}</td>
+              <td style="color:#6b7280;">${a.phone || '—'}</td>
+              <td><span class="btn-ghost" onclick="toast('编辑地址')">编辑</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
 /* ============ Carriers View ============ */
 function renderCarriers() {
   return `
   <h1 class="page-title">卡司管理</h1>
-  <p class="page-desc">合作卡车承运商（Carrier）列表</p>
+  <p class="page-desc">合作卡车承运商（Carrier）列表 · 自营 / 代理 / 三方</p>
   <table class="data-table">
     <thead><tr><th>卡司名称</th><th>类型</th><th>合作状态</th><th>覆盖区域</th><th>备注</th></tr></thead>
     <tbody>
@@ -854,6 +987,119 @@ function renderCarriers() {
   `;
 }
 
+/* ============ Billing ============ */
+function renderBilling() {
+  return `
+  <h1 class="page-title">费用结算</h1>
+  <p class="page-desc">卡司账单、费用明细、附加费与反弹项管理</p>
+  <div class="stat-grid">
+    <div class="stat-card primary"><div class="stat-label">本月应付卡司</div><div class="stat-value">$28,560</div><div class="stat-sub">↑ 12% 环比</div></div>
+    <div class="stat-card success"><div class="stat-label">已对账账单</div><div class="stat-value">42</div><div class="stat-sub">本月</div></div>
+    <div class="stat-card warn"><div class="stat-label">待处理反弹项</div><div class="stat-value">5</div><div class="stat-sub">需核实</div></div>
+    <div class="stat-card danger"><div class="stat-label">异常费用</div><div class="stat-value">$1,240</div><div class="stat-sub">待申诉</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>卡司账单</h3></div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>账单号</th><th>卡司</th><th>周期</th><th>订单数</th><th>基础运费</th><th>附加费</th><th>合计</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>BILL-202609-001</td><td>YQN-Transport</td><td>2026-09</td><td>18</td><td>$5,760</td><td>$1,170</td><td style="color:#ef4444;font-weight:600;">$6,930</td><td><span class="status-pill st-pickup">待付款</span></td></tr>
+          <tr><td>BILL-202609-002</td><td>CEVA</td><td>2026-09</td><td>12</td><td>$4,140</td><td>$804</td><td style="color:#ef4444;font-weight:600;">$4,944</td><td><span class="status-pill st-pickup">待付款</span></td></tr>
+          <tr><td>BILL-202609-003</td><td>FedEx Freight</td><td>2026-09</td><td>8</td><td>$3,040</td><td>$624</td><td style="color:#ef4444;font-weight:600;">$3,664</td><td><span class="status-pill st-transit">对账中</span></td></tr>
+          <tr><td>BILL-202608-001</td><td>YQN-Transport</td><td>2026-08</td><td>22</td><td>$7,040</td><td>$1,430</td><td style="color:#ef4444;font-weight:600;">$8,470</td><td><span class="status-pill st-delivered">已付款</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>卡司账单反弹项</h3></div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>反弹单号</th><th>关联卡车单</th><th>卡司</th><th>反弹项</th><th>金额</th><th>原因</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>RB-001</td><td>TK20260920012</td><td>XPO Logistics</td><td>Residential Fee</td><td>$85</td><td>实际为住宅地址</td><td><span class="status-pill st-pending">待处理</span></td></tr>
+          <tr><td>RB-002</td><td>TK20260918007</td><td>FedEx Freight</td><td>Lift-gate Fee</td><td>$60</td><td>实际使用尾板</td><td><span class="status-pill st-pending">待处理</span></td></tr>
+          <tr><td>RB-003</td><td>TK20260915003</td><td>CEVA</td><td>Re-delivery</td><td>$120</td><td>首次派送无人</td><td><span class="status-pill st-transit">申诉中</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+/* ============ Dashboard ============ */
+function renderDashboard() {
+  return `
+  <h1 class="page-title">数据看板</h1>
+  <p class="page-desc">卡派业务运营概览</p>
+  <div class="stat-grid">
+    <div class="stat-card primary"><div class="stat-label">本月订单数</div><div class="stat-value">186</div><div class="stat-sub">↑ 18% 环比</div></div>
+    <div class="stat-card success"><div class="stat-label">妥投率</div><div class="stat-value">96.8%</div><div class="stat-sub">目标 95%</div></div>
+    <div class="stat-card warn"><div class="stat-label">平均时效</div><div class="stat-value">2.8天</div><div class="stat-sub">↓ 0.3天 环比</div></div>
+    <div class="stat-card danger"><div class="stat-label">异常率</div><div class="stat-value">3.2%</div><div class="stat-sub">丢件/货损/延误</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>各卡司使用占比</h3></div>
+    <div class="card-body">
+      ${[
+        { name: 'YQN-Transport', pct: 45, color: '#16a34a' },
+        { name: 'CEVA', pct: 28, color: '#2563eb' },
+        { name: 'FedEx Freight', pct: 15, color: '#d97706' },
+        { name: 'XPO Logistics', pct: 12, color: '#dc2626' },
+      ].map(c => `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span>${c.name}</span><span style="font-weight:600;">${c.pct}%</span>
+          </div>
+          <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+            <div style="width:${c.pct}%;height:100%;background:${c.color};border-radius:4px;"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>近 7 日订单趋势</h3></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:flex-end;gap:12px;height:160px;">
+        ${[28,35,42,30,48,55,46].map((v,i) => `
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:100%;background:linear-gradient(180deg,#667eea,#818cf8);height:${v*2}px;border-radius:4px 4px 0 0;min-height:8px;"></div>
+            <div style="font-size:11px;color:#9ca3af;">${['周一','周二','周三','周四','周五','周六','周日'][i]}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/* ============ Claims ============ */
+function renderClaims() {
+  return `
+  <h1 class="page-title">异常售后</h1>
+  <p class="page-desc">丢件、货损、延误等异常工单处理</p>
+  <div class="status-tabs">
+    <div class="status-tab active">全部 8</div>
+    <div class="status-tab">待处理 3</div>
+    <div class="status-tab">处理中 2</div>
+    <div class="status-tab">已完结 3</div>
+  </div>
+  <div class="card">
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>工单号</th><th>关联卡车单</th><th>类型</th><th>卡司</th><th>金额</th><th>创建时间</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>CM-20260926001</td><td>TK20260920008</td><td>货损</td><td>XPO Logistics</td><td>$320</td><td>2026-09-26</td><td><span class="status-pill st-pending">待处理</span></td></tr>
+          <tr><td>CM-20260925003</td><td>TK20260918012</td><td>丢件</td><td>FedEx Freight</td><td>$1,580</td><td>2026-09-25</td><td><span class="status-pill st-pending">待处理</span></td></tr>
+          <tr><td>CM-20260924007</td><td>TK20260912005</td><td>延误</td><td>CEVA</td><td>$0</td><td>2026-09-24</td><td><span class="status-pill st-transit">处理中</span></td></tr>
+          <tr><td>CM-20260920012</td><td>TK20260905009</td><td>货损</td><td>YQN-Transport</td><td>$150</td><td>2026-09-20</td><td><span class="status-pill st-delivered">已完结</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
 /* ============ Utils ============ */
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -863,7 +1109,6 @@ function toast(msg) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// init
 showView('inquiry');
 </script>
 </body>
