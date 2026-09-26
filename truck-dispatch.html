@@ -270,6 +270,15 @@
       <label>密码</label>
       <input type="password" id="loginPwd" value="123456" placeholder="首次登录需重置密码">
     </div>
+    <div class="form-group" id="clientCustomerGroup" style="display:none;">
+      <label>选择客户账户</label>
+      <select class="form-select" id="loginCustomer" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;">
+        <option value="C001">ABC Trading Inc.（张经理）</option>
+        <option value="C002">Global E-Commerce LLC（李总）</option>
+        <option value="C003">Pacific Imports Co.（王女士）</option>
+        <option value="C005">West Coast FBA（刘经理）</option>
+      </select>
+    </div>
     <button class="btn btn-primary btn-block" onclick="doLogin()">登 录</button>
     <div class="login-tip">
       卡车询价客户端 / 卡车单客户端 · <a href="#">忘记密码？</a>
@@ -348,12 +357,22 @@ const CARRIERS = [
   { name: 'XPO Logistics', type: '3p', base: 335, transit: 5, features: '三方代理·时效不保障' },
 ];
 
+const CUSTOMERS = [
+  { id: 'C001', name: 'ABC Trading Inc.', contact: '张经理', phone: '+1 415-555-0123', email: 'ops@abctrading.com', status: 'active', creditLimit: 50000, registerTime: '2025-03-12' },
+  { id: 'C002', name: 'Global E-Commerce LLC', contact: '李总', phone: '+1 213-555-0456', email: 'finance@globalecom.com', status: 'active', creditLimit: 80000, registerTime: '2025-06-08' },
+  { id: 'C003', name: 'Pacific Imports Co.', contact: '王女士', phone: '+1 626-555-0789', email: 'wang@pacificimports.com', status: 'active', creditLimit: 30000, registerTime: '2025-09-21' },
+  { id: 'C004', name: 'Sunrise Retail Group', contact: '陈先生', phone: '+1 973-555-0321', email: 'chen@sunriseretail.com', status: 'frozen', creditLimit: 20000, registerTime: '2026-01-15' },
+  { id: 'C005', name: 'West Coast FBA', contact: '刘经理', phone: '+1 213-555-0654', email: 'liu@westcoastfba.com', status: 'active', creditLimit: 45000, registerTime: '2026-04-03' },
+];
+
 let ORDERS = [
-  { id: 'TK20260926001', status: 'transit', from: 'YQN-LA仓', to: 'Amazon LAX9', carrier: 'YQN-Transport', base:320, acc:65, price: 385, pallets: 1, mode:'LTL', goods:[{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}], createTime: '2026-09-26 09:15', tracking: '6002389145' },
-  { id: 'TK20260926002', status: 'pickup', from: 'YQN-LA仓', to: '123 Commerce St, CA', carrier: 'CEVA', base:345, acc:67, price: 412, pallets: 2, mode:'LTL', goods:[{sku:'SKU-B012',name:'户外折叠椅',hs:'940171',qty:20,weight:240}], createTime: '2026-09-26 10:30', tracking: '' },
-  { id: 'TK20260925008', status: 'delivered', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'YQN-Transport', base:430, acc:90, price: 520, pallets: 3, mode:'LTL', goods:[{sku:'SKU-C023',name:'厨房刀具套装',hs:'821490',qty:100,weight:320}], createTime: '2026-09-25 14:00', tracking: '6002389012' },
-  { id: 'TK20260925007', status: 'pending', from: '外部仓-CA', to: 'Amazon LAX9', carrier: 'FedEx Freight', base:380, acc:78, price: 458, pallets: 1, mode:'LTL', goods:[{sku:'SKU-D034',name:'智能台灯',hs:'940520',qty:30,weight:88}], createTime: '2026-09-25 16:20', tracking: '' },
-  { id: 'TK20260924015', status: 'failed', from: 'YQN-LA仓', to: 'Residential, CA', carrier: 'XPO Logistics', base:335, acc:64, price: 399, pallets: 1, mode:'LTL', goods:[{sku:'SKU-E045',name:'瑜伽垫',hs:'950691',qty:40,weight:60}], createTime: '2026-09-24 11:00', tracking: '' },
+  { id: 'TK20260926001', customerId:'C001', customerName:'ABC Trading Inc.', status: 'transit', from: 'YQN-LA仓', to: 'Amazon LAX9', carrier: 'YQN-Transport', base:320, acc:65, price: 385, pallets: 1, mode:'LTL', goods:[{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}], createTime: '2026-09-26 09:15', tracking: '6002389145' },
+  { id: 'TK20260926002', customerId:'C001', customerName:'ABC Trading Inc.', status: 'pickup', from: 'YQN-LA仓', to: '123 Commerce St, CA', carrier: 'CEVA', base:345, acc:67, price: 412, pallets: 2, mode:'LTL', goods:[{sku:'SKU-B012',name:'户外折叠椅',hs:'940171',qty:20,weight:240}], createTime: '2026-09-26 10:30', tracking: '' },
+  { id: 'TK20260925008', customerId:'C002', customerName:'Global E-Commerce LLC', status: 'delivered', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'YQN-Transport', base:430, acc:90, price: 520, pallets: 3, mode:'LTL', goods:[{sku:'SKU-C023',name:'厨房刀具套装',hs:'821490',qty:100,weight:320}], createTime: '2026-09-25 14:00', tracking: '6002389012' },
+  { id: 'TK20260925007', customerId:'C003', customerName:'Pacific Imports Co.', status: 'pending', from: '外部仓-CA', to: 'Amazon LAX9', carrier: 'FedEx Freight', base:380, acc:78, price: 458, pallets: 1, mode:'LTL', goods:[{sku:'SKU-D034',name:'智能台灯',hs:'940520',qty:30,weight:88}], createTime: '2026-09-25 16:20', tracking: '' },
+  { id: 'TK20260924015', customerId:'C005', customerName:'West Coast FBA', status: 'failed', from: 'YQN-LA仓', to: 'Residential, CA', carrier: 'XPO Logistics', base:335, acc:64, price: 399, pallets: 1, mode:'LTL', goods:[{sku:'SKU-E045',name:'瑜伽垫',hs:'950691',qty:40,weight:60}], createTime: '2026-09-24 11:00', tracking: '' },
+  { id: 'TK20260923011', customerId:'C002', customerName:'Global E-Commerce LLC', status: 'delivered', from: 'YQN-LA仓', to: 'Amazon LGB8', carrier: 'YQN-Transport', base:360, acc:70, price: 430, pallets: 2, mode:'LTL', goods:[{sku:'SKU-F056',name:'宠物喂食器',hs:'850980',qty:25,weight:200}], createTime: '2026-09-23 08:45', tracking: '6002388890' },
+  { id: 'TK20260922009', customerId:'C003', customerName:'Pacific Imports Co.', status: 'transit', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'CEVA', base:450, acc:85, price: 535, pallets: 1, mode:'LTL', goods:[{sku:'SKU-G067',name:'电动牙刷',hs:'850980',qty:60,weight:90}], createTime: '2026-09-22 15:20', tracking: '6002388701' },
 ];
 
 const ADDRESS_BOOK = [
@@ -366,31 +385,70 @@ const ADDRESS_BOOK = [
 ];
 
 let currentRole = 'admin'; // admin=管理端, client=客户端
+let currentCustomerId = 'C001'; // 当前登录客户的 ID
 
 const INQUIRY_RECORDS = [
-  { id: 'IQ20260926003', status: 'quoted', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:400, time:'2026-09-26 13:20' },
-  { id: 'IQ20260926002', status: 'ordered', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:385, time:'2026-09-26 09:10', orderNo:'TK20260926001' },
-  { id: 'IQ20260925005', status: 'expired', from: 'YQN-NY仓', to: 'Amazon EWR4', mode:'LTL', pallets:3, goods:'厨房刀具套装×100', carrier:'YQN-Transport', price:520, time:'2026-09-25 14:00' },
-  { id: 'IQ20260924008', status: 'quoted', from: '外部仓-CA', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'智能台灯×30', carrier:'FedEx Freight', price:458, time:'2026-09-24 16:20' },
+  { id: 'IQ20260926003', customerId:'C001', customerName:'ABC Trading Inc.', status: 'quoted', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:400, time:'2026-09-26 13:20' },
+  { id: 'IQ20260926002', customerId:'C001', customerName:'ABC Trading Inc.', status: 'ordered', from: 'YQN-LA仓', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'无线蓝牙耳机×50', carrier:'YQN-Transport', price:385, time:'2026-09-26 09:10', orderNo:'TK20260926001' },
+  { id: 'IQ20260925005', customerId:'C002', customerName:'Global E-Commerce LLC', status: 'expired', from: 'YQN-NY仓', to: 'Amazon EWR4', mode:'LTL', pallets:3, goods:'厨房刀具套装×100', carrier:'YQN-Transport', price:520, time:'2026-09-25 14:00' },
+  { id: 'IQ20260924008', customerId:'C003', customerName:'Pacific Imports Co.', status: 'quoted', from: '外部仓-CA', to: 'Amazon LAX9', mode:'LTL', pallets:1, goods:'智能台灯×30', carrier:'FedEx Freight', price:458, time:'2026-09-24 16:20' },
+  { id: 'IQ20260925011', customerId:'C002', customerName:'Global E-Commerce LLC', status: 'ordered', from: 'YQN-LA仓', to: 'Amazon LGB8', mode:'LTL', pallets:2, goods:'宠物喂食器×25', carrier:'YQN-Transport', price:430, time:'2026-09-25 08:40', orderNo:'TK20260923011' },
+  { id: 'IQ20260924015', customerId:'C005', customerName:'West Coast FBA', status: 'quoted', from: 'YQN-LA仓', to: 'Residential, CA', mode:'LTL', pallets:1, goods:'瑜伽垫×40', carrier:'XPO Logistics', price:399, time:'2026-09-24 10:50' },
 ];
 
-const WALLET = {
-  balance: 12580.50,
-  frozen: 680.00,
-  currency: 'USD',
-  bills: [
-    { id:'BILL-C001', period:'2026-09', amount:4320.00, status:'paid', time:'2026-09-25' },
-    { id:'BILL-C002', period:'2026-08', amount:3850.00, status:'paid', time:'2026-08-28' },
-    { id:'BILL-C003', period:'2026-07', amount:5120.00, status:'paid', time:'2026-07-30' },
-  ],
-  transactions: [
-    { id:'TX001', type:'recharge', amount:5000, balance:12580.50, time:'2026-09-20 10:15', remark:'银行转账充值' },
-    { id:'TX002', type:'consume', amount:-385, balance:7580.50, time:'2026-09-26 09:15', remark:'卡车单 TK20260926001 扣费' },
-    { id:'TX003', type:'consume', amount:-412, balance:7965.50, time:'2026-09-26 10:30', remark:'卡车单 TK20260926002 扣费' },
-    { id:'TX004', type:'recharge', amount:3000, balance:8377.50, time:'2026-09-15 14:00', remark:'在线充值' },
-    { id:'TX005', type:'refund', amount:120, balance:5377.50, time:'2026-09-12 09:30', remark:'订单异常退款' },
-  ],
+const WALLETS = {
+  C001: {
+    balance: 12580.50, frozen: 680.00, currency: 'USD',
+    bills: [
+      { id:'BILL-C001-09', period:'2026-09', amount:4320.00, status:'paid', time:'2026-09-25' },
+      { id:'BILL-C001-08', period:'2026-08', amount:3850.00, status:'paid', time:'2026-08-28' },
+      { id:'BILL-C001-07', period:'2026-07', amount:5120.00, status:'paid', time:'2026-07-30' },
+    ],
+    transactions: [
+      { id:'TX001', type:'recharge', amount:5000, balance:12580.50, time:'2026-09-20 10:15', remark:'银行转账充值' },
+      { id:'TX002', type:'consume', amount:-385, balance:7580.50, time:'2026-09-26 09:15', remark:'卡车单 TK20260926001 扣费' },
+      { id:'TX003', type:'consume', amount:-412, balance:7965.50, time:'2026-09-26 10:30', remark:'卡车单 TK20260926002 扣费' },
+      { id:'TX004', type:'recharge', amount:3000, balance:8377.50, time:'2026-09-15 14:00', remark:'在线充值' },
+      { id:'TX005', type:'refund', amount:120, balance:5377.50, time:'2026-09-12 09:30', remark:'订单异常退款' },
+    ],
+  },
+  C002: {
+    balance: 28340.00, frozen: 0, currency: 'USD',
+    bills: [
+      { id:'BILL-C002-09', period:'2026-09', amount:6250.00, status:'paid', time:'2026-09-25' },
+      { id:'BILL-C002-08', period:'2026-08', amount:7120.00, status:'paid', time:'2026-08-30' },
+    ],
+    transactions: [
+      { id:'TX010', type:'recharge', amount:10000, balance:28340.00, time:'2026-09-22 09:00', remark:'电汇充值' },
+      { id:'TX011', type:'consume', amount:-520, balance:18340.00, time:'2026-09-25 14:00', remark:'卡车单 TK20260925008 扣费' },
+      { id:'TX012', type:'consume', amount:-430, balance:18860.00, time:'2026-09-23 08:45', remark:'卡车单 TK20260923011 扣费' },
+    ],
+  },
+  C003: {
+    balance: 5680.00, frozen: 458.00, currency: 'USD',
+    bills: [
+      { id:'BILL-C003-09', period:'2026-09', amount:3180.00, status:'unpaid', time:'2026-09-26' },
+    ],
+    transactions: [
+      { id:'TX020', type:'recharge', amount:5000, balance:5680.00, time:'2026-09-18 11:20', remark:'信用卡充值' },
+      { id:'TX021', type:'consume', amount:-535, balance:680.00, time:'2026-09-22 15:20', remark:'卡车单 TK20260922009 扣费' },
+    ],
+  },
+  C005: {
+    balance: 15200.00, frozen: 0, currency: 'USD',
+    bills: [
+      { id:'BILL-C005-09', period:'2026-09', amount:980.00, status:'paid', time:'2026-09-25' },
+    ],
+    transactions: [
+      { id:'TX030', type:'recharge', amount:15000, balance:15200.00, time:'2026-09-10 16:00', remark:'电汇充值' },
+      { id:'TX031', type:'consume', amount:-399, balance:200.00, time:'2026-09-24 11:00', remark:'卡车单 TK20260924015 扣费（下单失败已退款）' },
+      { id:'TX032', type:'refund', amount:399, balance:599.00, time:'2026-09-24 12:00', remark:'订单 TK20260924015 退款' },
+    ],
+  },
 };
+
+// 兼容旧引用
+const WALLET = WALLETS.C001;
 
 /* ============ Auth ============ */
 function doLogin() {
@@ -398,6 +456,9 @@ function doLogin() {
   const pwd = document.getElementById('loginPwd').value;
   if (!email || !pwd) { toast('请输入账号和密码'); return; }
   currentRole = document.querySelector('input[name="loginRole"]:checked')?.value || 'admin';
+  if (currentRole === 'client') {
+    currentCustomerId = document.getElementById('loginCustomer').value || 'C001';
+  }
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('app').classList.add('active');
   renderSidebar();
@@ -417,6 +478,8 @@ function selectRole(el) {
   el.style.borderColor = '#667eea';
   el.style.background = '#eef2ff';
   el.querySelector('input').checked = true;
+  const isClient = el.querySelector('input').value === 'client';
+  document.getElementById('clientCustomerGroup').style.display = isClient ? 'block' : 'none';
 }
 
 function renderSidebar() {
@@ -430,6 +493,7 @@ function renderSidebar() {
       <div class="menu-item" data-view="orders"><span class="icon">📦</span>卡派订单</div>
       <div class="menu-item" data-view="tracking"><span class="icon">📍</span>物流跟踪</div>
       <div class="menu-group">基础数据</div>
+      <div class="menu-item" data-view="customers"><span class="icon">👥</span>客户管理</div>
       <div class="menu-item" data-view="addressbook"><span class="icon">📒</span>地址簿</div>
       <div class="menu-item" data-view="carriers"><span class="icon">🚛</span>卡司管理</div>
       <div class="menu-group">运营</div>
@@ -477,7 +541,7 @@ function showView(view) {
   const titles = {
     inquiry: '卡派询价', 'inquiry-records': '询价记录',
     orders: '卡派订单', tracking: '物流跟踪', detail: '订单详情',
-    addressbook: '地址簿', carriers: '卡司管理',
+    customers: '客户管理', addressbook: '地址簿', carriers: '卡司管理',
     billing: '费用结算', dashboard: '数据看板', claims: '异常售后',
     'client-inquiry': '我要询价', 'client-inquiry-records': '我的询价',
     'client-orders': '我的订单', wallet: '资金账户',
@@ -487,6 +551,7 @@ function showView(view) {
   const renderers = {
     inquiry: renderInquiry, 'inquiry-records': renderInquiryRecords,
     orders: renderOrders, detail: () => renderDetail(currentOrderId),
+    customers: renderCustomers,
     tracking: renderTracking, addressbook: renderAddressBook,
     carriers: renderCarriers, billing: renderBilling,
     dashboard: renderDashboard, claims: renderClaims,
@@ -506,6 +571,26 @@ function renderInquiry() {
   <p class="page-desc">支持 YQN 仓及其他海外仓提货，Business / Residential 派送，LTL/FTL/PTL 运输方式</p>
 
   <div class="alert alert-info">💡 YQN 仓库发货需先在 ERP 建发货单，状态为「已配货」才可询价，发货方式须为 LTL。</div>
+
+  <!-- 客户信息 -->
+  <div class="card">
+    <div class="card-header"><h3>客户信息</h3></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-label"><span class="req">*</span>${currentRole === 'admin' ? '选择客户' : '客户名称'}</label>
+          ${currentRole === 'admin'
+            ? `<select class="form-select" id="inqCustomer">${CUSTOMERS.filter(c=>c.status==='active').map(c => `<option value="${c.id}">${c.name}（${c.contact}）</option>`).join('')}</select>`
+            : `<input class="form-input" value="${CUSTOMERS.find(c=>c.id===currentCustomerId)?.name || ''}" readonly style="background:#f9fafb;">`
+          }
+        </div>
+        <div>
+          <label class="form-label">联系人 / 电话</label>
+          <input class="form-input" id="inqContact" value="${currentRole === 'admin' ? CUSTOMERS[0].contact + ' ' + CUSTOMERS[0].phone : (CUSTOMERS.find(c=>c.id===currentCustomerId)?.contact||'') + ' ' + (CUSTOMERS.find(c=>c.id===currentCustomerId)?.phone||'')}" readonly style="background:#f9fafb;">
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 运输方式 -->
   <div class="card">
@@ -841,8 +926,17 @@ function closeModal() { document.getElementById('confirmModal').classList.remove
 function submitOrder() {
   closeModal();
   const newId = 'TK' + Date.now().toString().slice(-10);
+  let custId, custName;
+  if (currentRole === 'admin') {
+    custId = document.getElementById('inqCustomer')?.value || 'C001';
+    custName = CUSTOMERS.find(c => c.id === custId)?.name || '';
+  } else {
+    custId = currentCustomerId;
+    custName = CUSTOMERS.find(c => c.id === currentCustomerId)?.name || '';
+  }
   ORDERS.unshift({
-    id: newId, status: 'pending', from: 'YQN-LA仓', to: 'Amazon LAX9',
+    id: newId, customerId: custId, customerName: custName,
+    status: 'pending', from: 'YQN-LA仓', to: 'Amazon LAX9',
     carrier: selectedQuote.name, base: selectedQuote.base, acc: selectedQuote.total - selectedQuote.base,
     price: selectedQuote.total, pallets: 1, mode: 'LTL',
     goods: [{sku:'SKU-A001',name:'无线蓝牙耳机',hs:'851830',qty:50,weight:158}],
@@ -894,11 +988,12 @@ function renderOrders() {
   </div>
 
   <table class="data-table">
-    <thead><tr><th>卡车单号</th><th>状态</th><th>提货仓</th><th>目的地</th><th>卡司</th><th>方式</th><th>托盘</th><th>费用</th><th>创建时间</th><th>操作</th></tr></thead>
+    <thead><tr><th>卡车单号</th><th>客户</th><th>状态</th><th>提货仓</th><th>目的地</th><th>卡司</th><th>方式</th><th>托盘</th><th>费用</th><th>创建时间</th><th>操作</th></tr></thead>
     <tbody>
       ${filtered.map(o => `
         <tr onclick="openDetail('${o.id}')">
           <td class="order-no">${o.id}</td>
+          <td style="font-weight:500;">${o.customerName || '—'}</td>
           <td><span class="status-pill st-${o.status}">${stMap[o.status]}</span></td>
           <td>${o.from}</td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.to}</td>
@@ -910,7 +1005,7 @@ function renderOrders() {
           <td><span class="btn-ghost" onclick="event.stopPropagation();openDetail('${o.id}')">详情</span></td>
         </tr>
       `).join('')}
-      ${filtered.length === 0 ? `<tr><td colspan="10"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
+      ${filtered.length === 0 ? `<tr><td colspan="11"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
     </tbody>
   </table>
   `;
@@ -970,6 +1065,7 @@ function renderDetail(id) {
     <div class="card-header"><h3>订单信息</h3></div>
     <div class="card-body">
       <div class="info-grid">
+        ${currentRole === 'admin' ? `<div class="info-item"><span class="label">客户</span><span class="value">${o.customerName || '—'}</span></div>` : ''}
         <div class="info-item"><span class="label">卡司</span><span class="value">${o.carrier}</span></div>
         <div class="info-item"><span class="label">费用</span><span class="value" style="color:#ef4444;">$${o.price}</span></div>
         <div class="info-item"><span class="label">提货仓库</span><span class="value">${o.from}</span></div>
@@ -1112,17 +1208,46 @@ function renderCarriers() {
 
 /* ============ Billing ============ */
 function renderBilling() {
+  const allBills = CUSTOMERS.flatMap(c => {
+    const w = WALLETS[c.id];
+    if (!w) return [];
+    return w.bills.map(b => ({ ...b, customerName: c.name, customerId: c.id }));
+  });
+  const totalReceivable = allBills.reduce((s, b) => s + b.amount, 0);
+  const unpaidReceivable = allBills.filter(b => b.status !== 'paid').reduce((s, b) => s + b.amount, 0);
+
   return `
   <h1 class="page-title">费用结算</h1>
-  <p class="page-desc">卡司账单、费用明细、附加费与反弹项管理</p>
+  <p class="page-desc">卡司应付账单、客户应收账单、附加费与反弹项管理</p>
   <div class="stat-grid">
     <div class="stat-card primary"><div class="stat-label">本月应付卡司</div><div class="stat-value">$28,560</div><div class="stat-sub">↑ 12% 环比</div></div>
-    <div class="stat-card success"><div class="stat-label">已对账账单</div><div class="stat-value">42</div><div class="stat-sub">本月</div></div>
-    <div class="stat-card warn"><div class="stat-label">待处理反弹项</div><div class="stat-value">5</div><div class="stat-sub">需核实</div></div>
+    <div class="stat-card success"><div class="stat-label">客户应收总额</div><div class="stat-value">$${totalReceivable.toLocaleString()}</div><div class="stat-sub">全部客户</div></div>
+    <div class="stat-card warn"><div class="stat-label">客户待收款</div><div class="stat-value">$${unpaidReceivable.toLocaleString()}</div><div class="stat-sub">${allBills.filter(b=>b.status!=='paid').length} 笔未付</div></div>
     <div class="stat-card danger"><div class="stat-label">异常费用</div><div class="stat-value">$1,240</div><div class="stat-sub">待申诉</div></div>
   </div>
   <div class="card">
-    <div class="card-header"><h3>卡司账单</h3></div>
+    <div class="card-header"><h3>客户应收账单</h3><span style="font-size:12px;color:#9ca3af;">向客户收取的运费账单</span></div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>账单号</th><th>客户</th><th>账期</th><th>金额</th><th>状态</th><th>出账时间</th><th>操作</th></tr></thead>
+        <tbody>
+          ${allBills.map(b => `
+            <tr>
+              <td style="color:#667eea;font-weight:500;">${b.id}</td>
+              <td style="font-weight:500;">${b.customerName}</td>
+              <td>${b.period}</td>
+              <td style="color:#16a34a;font-weight:600;">$${b.amount.toFixed(2)}</td>
+              <td><span class="status-pill ${b.status==='paid'?'st-delivered':'st-pending'}">${b.status==='paid'?'已支付':'待支付'}</span></td>
+              <td style="color:#6b7280;font-size:12px;">${b.time}</td>
+              <td><span class="btn-ghost" onclick="toast('查看账单 ${b.id}')">查看</span>${b.status!=='paid'?`<span class="btn-ghost" onclick="toast('发送催款通知')">催款</span>`:''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>卡司应付账单</h3></div>
     <div class="card-body" style="padding:0">
       <table class="data-table">
         <thead><tr><th>账单号</th><th>卡司</th><th>周期</th><th>订单数</th><th>基础运费</th><th>附加费</th><th>合计</th><th>状态</th></tr></thead>
@@ -1255,11 +1380,12 @@ function renderInquiryRecords() {
   </div>
 
   <table class="data-table">
-    <thead><tr><th>询价单号</th><th>状态</th><th>提货</th><th>目的地</th><th>方式</th><th>托盘</th><th>商品</th><th>卡司</th><th>报价</th><th>询价时间</th><th>操作</th></tr></thead>
+    <thead><tr><th>询价单号</th><th>客户</th><th>状态</th><th>提货</th><th>目的地</th><th>方式</th><th>托盘</th><th>商品</th><th>卡司</th><th>报价</th><th>询价时间</th><th>操作</th></tr></thead>
     <tbody>
       ${list.map(r => `
         <tr>
           <td style="color:#667eea;font-weight:500;">${r.id}</td>
+          <td style="font-weight:500;">${r.customerName}</td>
           <td><span class="status-pill ${stClass[r.status]}">${stMap[r.status]}</span></td>
           <td>${r.from}</td>
           <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.to}</td>
@@ -1274,12 +1400,99 @@ function renderInquiryRecords() {
           </td>
         </tr>
       `).join('')}
-      ${list.length === 0 ? `<tr><td colspan="11"><div class="empty-state"><div class="icon">📭</div>暂无询价记录</div></td></tr>` : ''}
+      ${list.length === 0 ? `<tr><td colspan="12"><div class="empty-state"><div class="icon">📭</div>暂无询价记录</div></td></tr>` : ''}
     </tbody>
   </table>
   `;
 }
 function filterIR(s) { irStatus = s; showView('inquiry-records'); }
+
+/* ============ Customers (Admin) ============ */
+function renderCustomers() {
+  const stMap = { active: '正常', frozen: '冻结' };
+  const stCls = { active: 'st-delivered', frozen: 'st-failed' };
+  const totalBalance = CUSTOMERS.reduce((s, c) => s + (WALLETS[c.id]?.balance || 0), 0);
+  const totalFrozen = CUSTOMERS.reduce((s, c) => s + (WALLETS[c.id]?.frozen || 0), 0);
+  const totalOrders = ORDERS.length;
+
+  return `
+  <h1 class="page-title">客户管理</h1>
+  <p class="page-desc">所有客户信息、账户余额与下单统计</p>
+
+  <div class="stat-grid">
+    <div class="stat-card primary"><div class="stat-label">客户总数</div><div class="stat-value">${CUSTOMERS.length}</div><div class="stat-sub">正常 ${CUSTOMERS.filter(c=>c.status==='active').length} · 冻结 ${CUSTOMERS.filter(c=>c.status==='frozen').length}</div></div>
+    <div class="stat-card success"><div class="stat-label">客户总余额</div><div class="stat-value">$${totalBalance.toLocaleString('en-US',{minimumFractionDigits:2})}</div><div class="stat-sub">冻结 $${totalFrozen.toFixed(2)}</div></div>
+    <div class="stat-card warn"><div class="stat-label">累计订单</div><div class="stat-value">${totalOrders}</div><div class="stat-sub">本月</div></div>
+    <div class="stat-card danger"><div class="stat-label">待收账单</div><div class="stat-value">${Object.values(WALLETS).reduce((s,w)=>s+w.bills.filter(b=>b.status!=='paid').length,0)}</div><div class="stat-sub">未支付</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <input placeholder="搜索客户名称 / 联系人 / 邮箱">
+      <select class="form-select" style="width:auto;">
+        <option>全部状态</option><option>正常</option><option>冻结</option>
+      </select>
+    </div>
+    <div><button class="btn btn-primary btn-sm" onclick="toast('新建客户功能演示')">+ 新建客户</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>客户编号</th><th>客户名称</th><th>联系人</th><th>联系电话</th><th>邮箱</th><th>账户余额</th><th>信用额度</th><th>订单数</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
+        <tbody>
+          ${CUSTOMERS.map(c => {
+            const w = WALLETS[c.id] || { balance:0, frozen:0 };
+            const orderCount = ORDERS.filter(o => o.customerId === c.id).length;
+            return `
+            <tr>
+              <td style="color:#667eea;font-weight:500;">${c.id}</td>
+              <td style="font-weight:500;">${c.name}</td>
+              <td>${c.contact}</td>
+              <td style="color:#6b7280;">${c.phone}</td>
+              <td style="color:#6b7280;font-size:12px;">${c.email}</td>
+              <td style="color:#16a34a;font-weight:600;">$${w.balance.toLocaleString('en-US',{minimumFractionDigits:2})}${w.frozen>0?`<span style="color:#9ca3af;font-weight:400;font-size:11px;">（冻${w.frozen}）</span>`:''}</td>
+              <td>$${c.creditLimit.toLocaleString()}</td>
+              <td>${orderCount}</td>
+              <td><span class="status-pill ${stCls[c.status]}">${stMap[c.status]}</span></td>
+              <td style="color:#6b7280;font-size:12px;">${c.registerTime}</td>
+              <td>
+                <span class="btn-ghost" onclick="toast('查看客户 ${c.name} 详情')">详情</span>
+                <span class="btn-ghost" onclick="toast('调整信用额度')">调额</span>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>客户资金明细</h3></div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>客户</th><th>账单号</th><th>账期</th><th>金额</th><th>状态</th><th>出账时间</th></tr></thead>
+        <tbody>
+          ${CUSTOMERS.flatMap(c => {
+            const w = WALLETS[c.id];
+            if (!w) return [];
+            return w.bills.map(b => `
+              <tr>
+                <td>${c.name}</td>
+                <td style="color:#667eea;">${b.id}</td>
+                <td>${b.period}</td>
+                <td style="color:#ef4444;font-weight:600;">$${b.amount.toFixed(2)}</td>
+                <td><span class="status-pill ${b.status==='paid'?'st-delivered':'st-pending'}">${b.status==='paid'?'已支付':'待支付'}</span></td>
+                <td style="color:#6b7280;font-size:12px;">${b.time}</td>
+              </tr>
+            `);
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
 
 /* ============ Client Inquiry ============ */
 function renderClientInquiry() {
@@ -1301,8 +1514,8 @@ function renderClientInquiryRecords() {
     { key: 'expired', label: '已过期' },
   ];
   const counts = {};
-  statuses.forEach(s => counts[s.key] = INQUIRY_RECORDS.filter(r => s.key === 'all' || r.status === s.key).length);
-  const list = cirStatus === 'all' ? INQUIRY_RECORDS : INQUIRY_RECORDS.filter(r => r.status === cirStatus);
+  statuses.forEach(s => counts[s.key] = INQUIRY_RECORDS.filter(r => r.customerId === currentCustomerId && (s.key === 'all' || r.status === s.key)).length);
+  const list = (cirStatus === 'all' ? INQUIRY_RECORDS : INQUIRY_RECORDS.filter(r => r.status === cirStatus)).filter(r => r.customerId === currentCustomerId);
 
   return `
   <h1 class="page-title">我的询价</h1>
@@ -1350,8 +1563,8 @@ function renderClientOrders() {
     { key: 'delivered', label: '已妥投' },
   ];
   const counts = {};
-  statuses.forEach(s => counts[s.key] = ORDERS.filter(o => s.key === 'all' || o.status === s.key).length);
-  const list = coStatus === 'all' ? ORDERS : ORDERS.filter(o => o.status === coStatus);
+  statuses.forEach(s => counts[s.key] = ORDERS.filter(o => o.customerId === currentCustomerId && (s.key === 'all' || o.status === s.key)).length);
+  const list = (coStatus === 'all' ? ORDERS : ORDERS.filter(o => o.status === coStatus)).filter(o => o.customerId === currentCustomerId);
 
   return `
   <h1 class="page-title">我的订单</h1>
@@ -1391,7 +1604,7 @@ function filterCO(s) { coStatus = s; showView('client-orders'); }
 
 /* ============ Wallet (Client) ============ */
 function renderWallet() {
-  const w = WALLET;
+  const w = WALLETS[currentCustomerId] || { balance:0, frozen:0, currency:'USD', bills:[], transactions:[] };
   const txMap = { recharge: '充值', consume: '消费', refund: '退款' };
   const txColor = { recharge: '#16a34a', consume: '#ef4444', refund: '#2563eb' };
   const billSt = { paid: '已支付', unpaid: '待支付', overdue: '已逾期' };
@@ -1494,10 +1707,11 @@ function openRecharge() {
 function submitRecharge() {
   const amt = +document.getElementById('rechargeAmt').value;
   if (!amt || amt <= 0) { toast('请输入有效金额'); return; }
-  WALLET.balance += amt;
-  WALLET.transactions.unshift({
+  const w = WALLETS[currentCustomerId];
+  w.balance += amt;
+  w.transactions.unshift({
     id: 'TX' + Date.now().toString().slice(-6),
-    type: 'recharge', amount: amt, balance: WALLET.balance,
+    type: 'recharge', amount: amt, balance: w.balance,
     time: new Date().toLocaleString('zh-CN', { hour12: false }),
     remark: '在线充值'
   });
