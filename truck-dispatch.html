@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡派系统 - Truck Dispatch System</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1f2937; font-size: 14px; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ===== Login ===== */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .login-box { width: 400px; background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .login-logo { text-align: center; margin-bottom: 30px; }
+  .login-logo .logo-icon { width: 56px; height: 56px; background: linear-gradient(135deg,#667eea,#764ba2); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 28px; font-weight: 700; }
+  .login-logo h1 { font-size: 22px; margin-top: 12px; color: #1f2937; }
+  .login-logo p { color: #6b7280; font-size: 13px; margin-top: 4px; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #374151; font-size: 13px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; transition: border-color .2s; background: #fff; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: #667eea; color: #fff; }
+  .btn-primary:hover { background: #5a6fd8; }
+  .btn-block { width: 100%; }
+  .login-tip { text-align: center; margin-top: 16px; font-size: 12px; color: #9ca3af; }
+  .login-tip a { color: #667eea; }
+
+  /* ===== App Layout ===== */
+  .app { display: none; }
+  .app.active { display: block; }
+  .app-layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: #1e293b; color: #cbd5e1; flex-shrink: 0; display: flex; flex-direction: column; }
+  .sidebar-header { padding: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #334155; }
+  .sidebar-header .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg,#667eea,#764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+  .sidebar-header .brand { font-size: 16px; font-weight: 600; color: #fff; }
+  .sidebar-header .brand small { display: block; font-size: 11px; color: #94a3b8; font-weight: 400; }
+  .sidebar-menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .menu-group { padding: 8px 16px; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+  .menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: all .2s; border-left: 3px solid transparent; color: #cbd5e1; }
+  .menu-item:hover { background: #334155; color: #fff; }
+  .menu-item.active { background: #334155; color: #fff; border-left-color: #667eea; }
+  .menu-item .icon { width: 18px; text-align: center; }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .topbar { height: 56px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+  .topbar .breadcrumb { font-size: 14px; color: #6b7280; }
+  .topbar .breadcrumb span { color: #1f2937; font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-right .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .content { flex: 1; padding: 24px; overflow-y: auto; }
+  .page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; color: #1f2937; }
+  .page-desc { font-size: 13px; color: #6b7280; margin-bottom: 20px; }
+
+  /* Cards */
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+  .card-header h3 { font-size: 15px; font-weight: 600; }
+  .card-body { padding: 20px; }
+
+  /* Form grid */
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151; }
+  .form-label .req { color: #ef4444; margin-right: 2px; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; background: #fff; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.12); }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+  .form-hint.warn { color: #f59e0b; }
+
+  /* Checkbox group */
+  .checkbox-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .checkbox-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all .2s; }
+  .checkbox-item:hover { border-color: #c7d2fe; background: #f5f3ff; }
+  .checkbox-item input { margin-top: 2px; }
+  .checkbox-item .cb-label { font-weight: 600; font-size: 13px; color: #1f2937; }
+  .checkbox-item .cb-desc { font-size: 11px; color: #6b7280; line-height: 1.4; margin-top: 2px; }
+  .checkbox-item.checked { border-color: #667eea; background: #eef2ff; }
+
+  /* Pallet type selector */
+  .pallet-types { display: flex; gap: 10px; margin-bottom: 12px; }
+  .pallet-type { flex: 1; padding: 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all .2s; }
+  .pallet-type.active { border-color: #667eea; background: #eef2ff; }
+  .pallet-type .pt-name { font-weight: 600; font-size: 13px; }
+  .pallet-type .pt-code { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+  /* Quote table */
+  .quote-table { width: 100%; border-collapse: collapse; }
+  .quote-table th { background: #f9fafb; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  .quote-table td { padding: 14px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .quote-table tr:hover { background: #f9fafb; }
+  .quote-table .carrier { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .carrier-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .badge-yqn { background: #dcfce7; color: #16a34a; }
+  .badge-agent { background: #dbeafe; color: #2563eb; }
+  .badge-3p { background: #fef3c7; color: #d97706; }
+  .price { font-size: 18px; font-weight: 700; color: #ef4444; }
+  .price small { font-size: 12px; font-weight: 400; color: #6b7280; }
+  .transit { color: #16a34a; font-weight: 500; }
+
+  /* Order list */
+  .status-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #fff; padding: 6px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); width: fit-content; }
+  .status-tab { padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #6b7280; transition: all .2s; }
+  .status-tab:hover { color: #1f2937; }
+  .status-tab.active { background: #667eea; color: #fff; }
+  .status-tab .count { margin-left: 4px; font-size: 11px; opacity: .8; }
+
+  .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .data-table th { background: #f9fafb; padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+  .data-table td { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .data-table tr:hover { background: #f9fafb; cursor: pointer; }
+  .data-table .order-no { color: #667eea; font-weight: 500; }
+
+  .status-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+  .st-pending { background: #fef3c7; color: #d97706; }
+  .st-pickup { background: #dbeafe; color: #2563eb; }
+  .st-transit { background: #e0e7ff; color: #4f46e5; }
+  .st-delivered { background: #dcfce7; color: #16a34a; }
+  .st-failed { background: #fee2e2; color: #dc2626; }
+
+  /* Order detail */
+  .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .detail-title { font-size: 22px; font-weight: 600; }
+  .detail-meta { color: #6b7280; font-size: 13px; margin-top: 4px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 32px; }
+  .info-item { display: flex; gap: 8px; }
+  .info-item .label { color: #6b7280; min-width: 90px; }
+  .info-item .value { color: #1f2937; font-weight: 500; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: #e5e7eb; }
+  .timeline-item { position: relative; padding-bottom: 20px; }
+  .timeline-item::before { content: ''; position: absolute; left: -21px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #e5e7eb; border: 3px solid #fff; box-shadow: 0 0 0 1px #e5e7eb; }
+  .timeline-item.done::before { background: #16a34a; box-shadow: 0 0 0 1px #16a34a; }
+  .timeline-item.active::before { background: #667eea; box-shadow: 0 0 0 1px #667eea; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+  .timeline-item .tl-title { font-weight: 600; font-size: 14px; }
+  .timeline-item .tl-time { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+  .timeline-item .tl-desc { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+  /* Attachments */
+  .attach-list { display: flex; gap: 12px; flex-wrap: wrap; }
+  .attach-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; min-width: 200px; cursor: pointer; transition: all .2s; }
+  .attach-item:hover { border-color: #667eea; background: #f5f3ff; }
+  .attach-icon { width: 36px; height: 36px; border-radius: 8px; background: #eef2ff; color: #667eea; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .attach-info .at-name { font-weight: 500; font-size: 13px; }
+  .attach-info .at-meta { font-size: 11px; color: #9ca3af; }
+
+  /* Tracking map mock */
+  .tracking-map { height: 180px; background: linear-gradient(135deg, #e0f2fe, #ede9fe); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 13px; position: relative; overflow: hidden; }
+  .tracking-route { position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: #667eea; }
+  .tracking-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: #16a34a; border: 3px solid #fff; box-shadow: 0 0 0 2px #16a34a; }
+  .tracking-dot.start { left: 10%; }
+  .tracking-dot.end { left: 90%; background: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+  .tracking-dot.current { left: 55%; background: #667eea; box-shadow: 0 0 0 2px #667eea; animation: pulse 2s infinite; }
+
+  /* Misc */
+  .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .toolbar .search { display: flex; gap: 8px; }
+  .toolbar .search input { width: 260px; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; }
+  .toolbar .search input:focus { border-color: #667eea; }
+  .alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; }
+  .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .alert-warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #f3f4f6; color: #4b5563; }
+  .flex { display: flex; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .mb-3 { margin-bottom: 12px; }
+  .mt-3 { margin-top: 12px; }
+  .text-right { text-align: right; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #fff; border-radius: 12px; width: 520px; max-width: 92vw; overflow: hidden; }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-weight: 600; font-size: 16px; }
+  .modal-body { padding: 20px; }
+  .modal-footer { padding: 14px 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-default { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+  .btn-default:hover { background: #f9fafb; }
+  .btn-success { background: #16a34a; color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-ghost { background: transparent; color: #667eea; padding: 6px 12px; }
+  .btn-ghost:hover { background: #eef2ff; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  /* Toast */
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 2000; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🚚</div>
+      <h1>卡派系统</h1>
+      <p>Truck Dispatch System · 卡车派送管理平台</p>
+    </div>
+    <div class="form-group">
+      <label>邮箱账号</label>
+      <input type="email" id="loginEmail" value="ops@company.com" placeholder="开户时提供的邮箱">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="loginPwd" value="123456" placeholder="首次登录需重置密码">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">登 录</button>
+    <div class="login-tip">
+      卡车询价客户端 / 卡车单客户端 · <a href="#">忘记密码？</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="app">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">🚚</div>
+        <div class="brand">卡派系统<small>Truck Dispatch</small></div>
+      </div>
+      <nav class="sidebar-menu">
+        <div class="menu-group">物流</div>
+        <div class="menu-item active" data-view="inquiry"><span class="icon">📋</span>卡派询价</div>
+        <div class="menu-item" data-view="orders"><span class="icon">📦</span>卡派订单</div>
+        <div class="menu-item" data-view="tracking"><span class="icon">📍</span>物流跟踪</div>
+        <div class="menu-group">系统</div>
+        <div class="menu-item" data-view="carriers"><span class="icon">🚛</span>卡司管理</div>
+        <div class="menu-item" onclick="logout()"><span class="icon">🚪</span>退出登录</div>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+        <div class="breadcrumb"><span id="bcTitle">卡派询价</span></div>
+        <div class="topbar-right">
+          <span style="font-size:13px;color:#6b7280;">🔔</span>
+          <div class="avatar">运</div>
+        </div>
+      </header>
+
+      <main class="content" id="content">
+        <!-- views injected here -->
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- Order confirm modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-header">确认下单</div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitOrder()">确认下单</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ Mock Data ============ */
+const CARRIERS = [
+  { name: 'YQN-Transport', type: 'yqn', price: 385, transit: 2, features: '自营车队·亚马逊认证' },
+  { name: 'CEVA', type: 'agent', price: 412, transit: 3, features: 'YQN代理卡司' },
+  { name: 'FedEx Freight', type: '3p', price: 458, transit: 4, features: '三方代理' },
+  { name: 'XPO Logistics', type: '3p', price: 399, transit: 5, features: '三方代理·时效不保障' },
+];
+
+let ORDERS = [
+  { id: 'TK20260926001', status: 'transit', from: 'YQN-LA仓', to: 'Amazon LAX9', carrier: 'YQN-Transport', price: 385, pallets: 1, createTime: '2026-09-26 09:15', tracking: '6002389145' },
+  { id: 'TK20260926002', status: 'pickup', from: 'YQN-LA仓', to: '123 Commerce St, CA', carrier: 'CEVA', price: 412, pallets: 2, createTime: '2026-09-26 10:30', tracking: '' },
+  { id: 'TK20260925008', status: 'delivered', from: 'YQN-NY仓', to: 'Amazon EWR4', carrier: 'YQN-Transport', price: 520, pallets: 3, createTime: '2026-09-25 14:00', tracking: '6002389012' },
+  { id: 'TK20260925007', status: 'pending', from: '外部仓-CA', to: 'Amazon LAX9', carrier: 'FedEx Freight', price: 458, pallets: 1, createTime: '2026-09-25 16:20', tracking: '' },
+  { id: 'TK20260924015', status: 'failed', from: 'YQN-LA仓', to: 'Residential, CA', carrier: 'XPO Logistics', price: 399, pallets: 1, createTime: '2026-09-24 11:00', tracking: '' },
+];
+
+let currentView = 'inquiry';
+let selectedQuote = null;
+
+/* ============ Auth ============ */
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  if (!email || !pwd) { toast('请输入账号和密码'); return; }
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  showView('inquiry');
+}
+function logout() {
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+/* ============ Navigation ============ */
+document.querySelectorAll('.menu-item[data-view]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    showView(item.dataset.view);
+  });
+});
+
+function showView(view) {
+  currentView = view;
+  const titles = { inquiry: '卡派询价', orders: '卡派订单', tracking: '物流跟踪', carriers: '卡司管理', detail: '订单详情' };
+  document.getElementById('bcTitle').textContent = titles[view] || '';
+  const content = document.getElementById('content');
+  if (view === 'inquiry') content.innerHTML = renderInquiry();
+  else if (view === 'orders') content.innerHTML = renderOrders();
+  else if (view === 'detail') content.innerHTML = renderDetail(currentOrderId);
+  else if (view === 'tracking') content.innerHTML = renderTracking();
+  else if (view === 'carriers') content.innerHTML = renderCarriers();
+  bindInquiryEvents();
+}
+
+/* ============ Inquiry View ============ */
+function renderInquiry() {
+  return `
+  <h1 class="page-title">卡派询价</h1>
+  <p class="page-desc">支持 YQN 仓及其他海外仓提货，Business / Residential 派送</p>
+
+  <div class="alert alert-info">💡 提示：YQN 仓库发货需先在 ERP 建发货单，状态为「已配货」才可询价，发货方式须为 LTL。</div>
+
+  <!-- 提货信息 -->
+  <div class="card">
+    <div class="card-header"><h3>提货信息</h3></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-label"><span class="req">*</span>提货仓库</label>
+          <select class="form-select" id="whType" onchange="toggleWhFields()">
+            <option value="yqn">YQN 仓库</option>
+            <option value="external">其他海外仓</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label"><span class="req">*</span>关联业务单号</label>
+          <input class="form-input" id="bizNo" placeholder="YQN仓提货可自动带出地址" value="SO20260926001">
+        </div>
+        <div id="extPickupFields" style="display:none" class="full">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">发货方详细地址</label>
+              <input class="form-input" placeholder="外仓提货需手动填写">
+            </div>
+            <div>
+              <label class="form-label">发货仓库联系人姓名</label>
+              <input class="form-input" placeholder="务必填写仓库名称">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收货信息 -->
+  <div class="card">
+    <div class="card-header"><h3>收货信息</h3></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-label"><span class="req">*</span>收货方名称</label>
+          <input class="form-input" value="Amazon.com Services LLC">
+        </div>
+        <div>
+          <label class="form-label"><span class="req">*</span>收货邮编</label>
+          <input class="form-input" value="92374">
+        </div>
+        <div class="full">
+          <label class="form-label"><span class="req">*</span>收货详细地址</label>
+          <input class="form-input" id="delivAddr" value="12345 Delivery Way, San Bernardino, CA" maxlength="35">
+          <div class="form-hint">地址最多支持 35 个字符，超长内容请放在备注中。当前 <span id="addrCount">43</span> 字符</div>
+        </div>
+        <div>
+          <label class="form-label"><span class="req">*</span>派送类型</label>
+          <select class="form-select">
+            <option>Business（商业地址）</option>
+            <option>Residential（住宅地址）</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label"><span class="req">*</span>提货日期</label>
+          <input type="date" class="form-input" value="2026-09-27">
+        </div>
+        <div class="full">
+          <label class="form-label">备注</label>
+          <textarea class="form-textarea" placeholder="如需补充说明请填写"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 打托信息 -->
+  <div class="card">
+    <div class="card-header"><h3>打托信息</h3></div>
+    <div class="card-body">
+      <label class="form-label">产品状态</label>
+      <div class="pallet-types">
+        <div class="pallet-type active" data-pt="CARTONS" onclick="selectPalletType(this)">
+          <div class="pt-name">单纯纸箱（不打托）</div>
+          <div class="pt-code">CARTONS</div>
+        </div>
+        <div class="pallet-type" data-pt="PALLETS" onclick="selectPalletType(this)">
+          <div class="pt-name">自带托脚</div>
+          <div class="pt-code">PALLETS</div>
+        </div>
+        <div class="pallet-type" data-pt="PALLETS" onclick="selectPalletType(this)">
+          <div class="pt-name">需仓库打托出库</div>
+          <div class="pt-code">PALLETS · 标准 48×40</div>
+        </div>
+      </div>
+      <div class="form-grid cols-3">
+        <div>
+          <label class="form-label">长 (in)</label>
+          <input type="number" class="form-input" id="pLen" value="22">
+        </div>
+        <div>
+          <label class="form-label">宽 (in)</label>
+          <input type="number" class="form-input" id="pWid" value="16">
+        </div>
+        <div>
+          <label class="form-label">高 (in)</label>
+          <input type="number" class="form-input" id="pHei" value="38">
+        </div>
+        <div>
+          <label class="form-label">单件重量 (lbs)</label>
+          <input type="number" class="form-input" id="pWt" value="158">
+        </div>
+        <div>
+          <label class="form-label">数量</label>
+          <input type="number" class="form-input" id="pQty" value="2">
+        </div>
+        <div>
+          <label class="form-label">托盘重量 (lbs)</label>
+          <input type="number" class="form-input" value="40" placeholder="仓库打托需填">
+        </div>
+      </div>
+      <div class="form-hint mt-3">💡 仓库打托标准托盘 48×40：若不足长宽按托盘长宽计算，超出按实际计算。例：22×2=44 不足 48，长按 48 计。</div>
+    </div>
+  </div>
+
+  <!-- 增值服务 -->
+  <div class="card">
+    <div class="card-header"><h3>发货增值服务</h3><span style="font-size:12px;color:#9ca3af;">不勾选则不提供相应服务</span></div>
+    <div class="card-body">
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">Inside</div>
+            <div class="cb-desc">司机将货物送至车库或前门</div>
+          </div>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">lift-gate</div>
+            <div class="cb-desc">尾板装卸，无卸货能力时必选</div>
+          </div>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">APPT</div>
+            <div class="cb-desc">派送前电话预约派送时间</div>
+          </div>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">ROC</div>
+            <div class="cb-desc">货物放至客户指定房间内</div>
+          </div>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">WGD 白手套</div>
+            <div class="cb-desc">入室+拆包装+清垃圾，仅支持 metro</div>
+          </div>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="vas">
+          <div>
+            <div class="cb-label">NSR</div>
+            <div class="cb-desc">住宅地址+卡司为 CEVA 时免签收</div>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-right">
+    <button class="btn btn-primary" onclick="doInquiry()">立即询价</button>
+  </div>
+
+  <!-- 询价结果 -->
+  <div id="quoteResult" style="display:none">
+    <h2 class="page-title" style="margin-top:24px;">询价结果 · 卡司报价</h2>
+    <p class="page-desc">建议优先选择 YQN 代理的卡司，三方代理卡司履约时效无法保障。</p>
+    <div class="card">
+      <div class="card-body" style="padding:0">
+        <table class="quote-table">
+          <thead>
+            <tr>
+              <th>卡司</th><th>类型</th><th>参考时效</th><th>报价</th><th>说明</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${CARRIERS.map((c, i) => `
+              <tr>
+                <td><div class="carrier">${c.name} ${c.type==='yqn'?'<span class="tag" style="background:#dcfce7;color:#16a34a;">自营</span>':''}</div></td>
+                <td><span class="carrier-badge badge-${c.type}">${c.type==='yqn'?'自营车队':c.type==='agent'?'YQN代理':'三方代理'}</span></td>
+                <td><span class="transit">${c.transit} 天</span></td>
+                <td><div class="price">$${c.price} <small>/票</small></div></td>
+                <td style="color:#6b7280;font-size:12px;">${c.features}</td>
+                <td><button class="btn btn-primary btn-sm" onclick="placeOrder(${i})">下单</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="alert alert-warn">⚠️ 若出现 <b>YQN-Transport</b> 即为自营车队，时效短价格优，且为亚马逊认证服务商。亚马逊后台选承运商 YQN，填 600 开头追踪号即可同步轨迹。</div>
+  </div>
+  `;
+}
+
+function bindInquiryEvents() {
+  const addr = document.getElementById('delivAddr');
+  if (addr) {
+    addr.addEventListener('input', () => {
+      document.getElementById('addrCount').textContent = addr.value.length;
+    });
+  }
+  document.querySelectorAll('.checkbox-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') {
+        const cb = item.querySelector('input');
+        cb.checked = !cb.checked;
+      }
+      item.classList.toggle('checked', item.querySelector('input').checked);
+    });
+  });
+}
+
+function toggleWhFields() {
+  const v = document.getElementById('whType').value;
+  document.getElementById('extPickupFields').style.display = v === 'external' ? 'block' : 'none';
+}
+
+function selectPalletType(el) {
+  document.querySelectorAll('.pallet-type').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function doInquiry() {
+  const len = +document.getElementById('pLen').value;
+  const qty = +document.getElementById('pQty').value;
+  if (len <= 0 || qty <= 0) { toast('请填写有效的尺寸和数量'); return; }
+  document.getElementById('quoteResult').style.display = 'block';
+  document.getElementById('quoteResult').scrollIntoView({ behavior: 'smooth' });
+  toast('询价成功，已获取 ' + CARRIERS.length + ' 家卡司报价');
+}
+
+/* ============ Place Order ============ */
+function placeOrder(idx) {
+  selectedQuote = CARRIERS[idx];
+  const body = document.getElementById('confirmBody');
+  body.innerHTML = `
+    <div class="alert alert-info">下单后不可修改收发货邮编、打托数据、提货日期，如需修改请重新询价。</div>
+    <div class="info-grid">
+      <div class="info-item"><span class="label">卡司</span><span class="value">${selectedQuote.name}</span></div>
+      <div class="info-item"><span class="label">报价</span><span class="value" style="color:#ef4444;font-weight:700;">$${selectedQuote.price}</span></div>
+      <div class="info-item"><span class="label">参考时效</span><span class="value">${selectedQuote.transit} 天</span></div>
+      <div class="info-item"><span class="label">收货地址</span><span class="value" style="font-size:12px;">12345 Delivery Way, San...</span></div>
+      <div class="info-item"><span class="label">打托类型</span><span class="value">CARTONS（不打托）</span></div>
+      <div class="info-item"><span class="label">件数</span><span class="value">2 件</span></div>
+    </div>
+  `;
+  document.getElementById('confirmModal').classList.add('active');
+}
+function closeModal() { document.getElementById('confirmModal').classList.remove('active'); }
+
+function submitOrder() {
+  closeModal();
+  const newId = 'TK' + Date.now().toString().slice(-10);
+  ORDERS.unshift({
+    id: newId, status: 'pending', from: 'YQN-LA仓', to: 'Amazon LAX9',
+    carrier: selectedQuote.name, price: selectedQuote.price, pallets: 1,
+    createTime: new Date().toLocaleString('zh-CN', { hour12: false }), tracking: ''
+  });
+  toast('下单成功！请等待 5 分钟后到卡车单列表查看');
+  setTimeout(() => {
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('.menu-item[data-view="orders"]').classList.add('active');
+    showView('orders');
+  }, 1200);
+}
+
+/* ============ Orders View ============ */
+let currentStatus = 'all';
+function renderOrders() {
+  const statuses = [
+    { key: 'all', label: '全部' },
+    { key: 'pending', label: '待审核' },
+    { key: 'pickup', label: '待提货' },
+    { key: 'transit', label: '在途' },
+    { key: 'delivered', label: '已妥投' },
+    { key: 'failed', label: '下单失败' },
+  ];
+  const counts = {};
+  statuses.forEach(s => counts[s.key] = ORDERS.filter(o => s.key === 'all' || o.status === s.key).length);
+
+  const list = ORDERS.filter(o => currentStatus === 'all' || o.status === currentStatus);
+  const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
+
+  return `
+  <h1 class="page-title">卡派订单</h1>
+  <p class="page-desc">下单后等待 5 分钟，到卡车列表查看是否下单成功</p>
+
+  <div class="status-tabs">
+    ${statuses.map(s => `
+      <div class="status-tab ${currentStatus===s.key?'active':''}" onclick="filterStatus('${s.key}')">
+        ${s.label}<span class="count">${counts[s.key]}</span>
+      </div>
+    `).join('')}
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <input placeholder="搜索卡车单号 / 收发货地址">
+      <select class="form-select" style="width:auto;">
+        <option>全部仓库</option><option>YQN-LA仓</option><option>YQN-NY仓</option>
+      </select>
+    </div>
+    <div>
+      <button class="btn btn-default btn-sm">导出</button>
+    </div>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>卡车单号</th><th>状态</th><th>提货仓</th><th>目的地</th>
+        <th>卡司</th><th>托盘数</th><th>费用</th><th>创建时间</th><th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${list.map(o => `
+        <tr onclick="openDetail('${o.id}')">
+          <td class="order-no">${o.id}</td>
+          <td><span class="status-pill st-${o.status}">${stMap[o.status]}</span></td>
+          <td>${o.from}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.to}</td>
+          <td>${o.carrier}</td>
+          <td>${o.pallets}</td>
+          <td style="color:#ef4444;font-weight:600;">$${o.price}</td>
+          <td style="color:#6b7280;font-size:12px;">${o.createTime}</td>
+          <td><span class="btn-ghost" onclick="event.stopPropagation();openDetail('${o.id}')">详情</span></td>
+        </tr>
+      `).join('')}
+      ${list.length === 0 ? `<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>暂无订单</div></td></tr>` : ''}
+    </tbody>
+  </table>
+  `;
+}
+
+function filterStatus(s) {
+  currentStatus = s;
+  showView('orders');
+}
+
+/* ============ Order Detail ============ */
+let currentOrderId = null;
+function openDetail(id) {
+  currentOrderId = id;
+  showView('detail');
+}
+
+function renderDetail(id) {
+  const o = ORDERS.find(x => x.id === id);
+  if (!o) return '<div class="empty-state">订单不存在</div>';
+  const stMap = { pending: '待审核', pickup: '待提货', transit: '在途', delivered: '已妥投', failed: '下单失败' };
+
+  const timeline = [
+    { t: '下单成功', time: o.createTime, desc: `卡车单 ${o.id} 已创建，等待审核`, state: 'done' },
+    { t: '审核通过', time: o.status !== 'pending' ? '2026-09-26 09:18' : '', desc: o.status === 'pending' ? '等待审核中...' : '卡司已确认接单', state: o.status === 'pending' ? 'active' : 'done' },
+    { t: '已提货', time: ['transit','delivered'].includes(o.status) ? '2026-09-27 08:30' : '', desc: ['transit','delivered'].includes(o.status) ? '司机已提货，货物在途' : '待提货', state: ['transit','delivered'].includes(o.status) ? 'done' : (o.status==='pickup'?'active':'') },
+    { t: '运输中', time: o.status === 'delivered' ? '2026-09-27 ~ 2026-09-28' : '', desc: o.status === 'transit' ? '货物运输中，实时更新轨迹' : (o.status==='delivered'?'运输完成':''), state: o.status === 'transit' ? 'active' : (o.status==='delivered'?'done':'') },
+    { t: '已妥投', time: o.status === 'delivered' ? '2026-09-28 14:20' : '', desc: o.status === 'delivered' ? '货物已送达，可下载 POD' : '', state: o.status === 'delivered' ? 'done' : '' },
+  ].filter(x => x.state);
+
+  const attachments = [
+    { name: 'BOL.pdf', type: 'PDF', size: '128 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'PalletLabel.pdf', type: 'PDF', size: '86 KB', ready: o.status !== 'pending' && o.status !== 'failed' },
+    { name: 'POD.pdf', type: 'PDF', size: '210 KB', ready: o.status === 'delivered' },
+  ];
+
+  return `
+  <button class="btn btn-default btn-sm" onclick="showView('orders')" style="margin-bottom:16px;">← 返回列表</button>
+
+  <div class="detail-header">
+    <div>
+      <div class="detail-title">卡车单 ${o.id}</div>
+      <div class="detail-meta">创建时间：${o.createTime} · <span class="status-pill st-${o.status}">${stMap[o.status]}</span></div>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-default btn-sm">联系客服</button>
+      <button class="btn btn-primary btn-sm">查看附件</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>订单信息</h3></div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><span class="label">卡司</span><span class="value">${o.carrier}</span></div>
+        <div class="info-item"><span class="label">费用</span><span class="value" style="color:#ef4444;">$${o.price}</span></div>
+        <div class="info-item"><span class="label">提货仓库</span><span class="value">${o.from}</span></div>
+        <div class="info-item"><span class="label">目的地</span><span class="value">${o.to}</span></div>
+        <div class="info-item"><span class="label">打托类型</span><span class="value">CARTONS</span></div>
+        <div class="info-item"><span class="label">托盘数</span><span class="value">${o.pallets}</span></div>
+        <div class="info-item"><span class="label">追踪号</span><span class="value" style="color:#667eea;">${o.tracking || '待生成'}</span></div>
+        <div class="info-item"><span class="label">增值服务</span><span class="value">lift-gate, APPT</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>物流轨迹</h3></div>
+    <div class="card-body">
+      ${o.status === 'transit' || o.status === 'delivered' ? `
+        <div class="tracking-map mb-3">
+          <div class="tracking-route"></div>
+          <div class="tracking-dot start" title="提货地"></div>
+          <div class="tracking-dot current" title="当前位置"></div>
+          <div class="tracking-dot end" title="目的地"></div>
+          <span style="position:absolute;left:8%;bottom:8px;font-size:11px;">${o.from}</span>
+          <span style="position:absolute;right:8%;bottom:8px;font-size:11px;">${o.to}</span>
+        </div>
+      ` : ''}
+      <div class="timeline">
+        ${timeline.map(t => `
+          <div class="timeline-item ${t.state}">
+            <div class="tl-title">${t.t}</div>
+            <div class="tl-time">${t.time || '—'}</div>
+            <div class="tl-desc">${t.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>附件</h3>
+      <span style="font-size:12px;color:#9ca3af;">YQN 仓提货附件自动带入发货单，外仓需手动下载</span>
+    </div>
+    <div class="card-body">
+      <div class="attach-list">
+        ${attachments.map(a => `
+          <div class="attach-item" onclick="${a.ready ? `toast('开始下载 ${a.name}')` : `toast('附件未生成')`}">
+            <div class="attach-icon">📄</div>
+            <div class="attach-info">
+              <div class="at-name">${a.name}</div>
+              <div class="at-meta">${a.type} · ${a.size} · ${a.ready ? '可下载' : '未生成'}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </div>
+
+  ${o.tracking ? `
+  <div class="card">
+    <div class="card-header"><h3>卡司站点查询</h3></div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><span class="label">追踪号</span><span class="value" style="color:#667eea;">${o.tracking}</span></div>
+        <div class="info-item"><span class="label">承运商</span><span class="value">${o.carrier}</span></div>
+      </div>
+      <button class="btn btn-default btn-sm mt-3" onclick="toast('正在跳转卡司官网查询...')">前往卡司官网查询 →</button>
+    </div>
+  </div>
+  ` : ''}
+  `;
+}
+
+/* ============ Tracking View ============ */
+function renderTracking() {
+  return `
+  <h1 class="page-title">物流跟踪查询</h1>
+  <p class="page-desc">通过卡车单号或追踪号查询货物实时位置</p>
+  <div class="card">
+    <div class="card-body">
+      <div class="flex gap-2">
+        <input class="form-input" placeholder="输入卡车单号 / 追踪号" value="6002389145" style="max-width:360px;">
+        <button class="btn btn-primary" onclick="toast('查询中...')">查询</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>查询结果</h3></div>
+    <div class="card-body">
+      <div class="tracking-map" style="height:240px;">
+        <div class="tracking-route"></div>
+        <div class="tracking-dot start"></div>
+        <div class="tracking-dot current"></div>
+        <div class="tracking-dot end"></div>
+      </div>
+      <div class="timeline mt-3">
+        <div class="timeline-item done"><div class="tl-title">已提货</div><div class="tl-time">2026-09-27 08:30</div><div class="tl-desc">YQN-LA仓 提货完成</div></div>
+        <div class="timeline-item active"><div class="tl-title">运输中</div><div class="tl-time">2026-09-27 ~ 至今</div><div class="tl-desc">当前位置：San Bernardino, CA · 距目的地约 120 英里</div></div>
+        <div class="timeline-item"><div class="tl-title">预计送达</div><div class="tl-time">2026-09-28</div><div class="tl-desc">Amazon LAX9</div></div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/* ============ Carriers View ============ */
+function renderCarriers() {
+  return `
+  <h1 class="page-title">卡司管理</h1>
+  <p class="page-desc">合作卡车承运商（Carrier）列表</p>
+  <table class="data-table">
+    <thead><tr><th>卡司名称</th><th>类型</th><th>合作状态</th><th>覆盖区域</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td>YQN-Transport</td><td><span class="status-pill st-delivered">自营车队</span></td><td>正常</td><td>美西</td><td>亚马逊认证服务商，追踪号 600 开头</td></tr>
+      <tr><td>CEVA</td><td><span class="carrier-badge badge-agent">YQN代理</span></td><td>正常</td><td>全美</td><td>支持 NSR 免签收服务</td></tr>
+      <tr><td>FedEx Freight</td><td><span class="carrier-badge badge-3p">三方代理</span></td><td>正常</td><td>全美</td><td>—</td></tr>
+      <tr><td>XPO Logistics</td><td><span class="carrier-badge badge-3p">三方代理</span></td><td>正常</td><td>全美</td><td>履约时效不保障，慎用</td></tr>
+    </tbody>
+  </table>
+  `;
+}
+
+/* ============ Utils ============ */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// init
+showView('inquiry');
+</script>
+</body>
+</html>
