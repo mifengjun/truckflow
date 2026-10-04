@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Truckflow · 交互原型",
-  description: "卡派客户中心与管理后台的可交互设计原型",
+  title: "Truckflow · 卡派协同工作台",
+  description: "美国 LTL 询价、订单与预付资金管理",
 };
 export default function RootLayout({
   children,

@@ -2,6 +2,8 @@ node_modules/
 target/
 __pycache__/
 .env
+.env.*
+!.env.example
 dist/
 *.log
 .DS_Store
@@ -10,3 +12,6 @@ node_modules/
 *.tsbuildinfo
 playwright-report/
 test-results/
+.superpowers/
+
+supabase/.temp/
