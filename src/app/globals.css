@@ -2904,8 +2904,7 @@ select.field:hover {
   }
 }
 /* Native tokens also reach portals outside the business page container. */
-:root:has(.production-app),
-:root:has(.production-auth) {
+:root:has(.production-app, .production-auth, .production-home) {
   /* shadcn/ui New York neutral theme. Prototype routes keep their theme. */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -2942,9 +2941,15 @@ select.field:hover {
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
-body:has(.production-app),
-body:has(.production-auth) {
+body:has(.production-app, .production-auth, .production-home) {
   font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.production-home h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+.production-home footer {
+  padding: 0;
+  color: var(--muted-foreground);
 }
 .production-app {
   min-height: 100dvh;
@@ -3202,7 +3207,7 @@ fieldset {
   padding: 0;
   border-radius: 0;
 }
-:is(body:has(.production-app), body:has(.production-auth))
+body:has(.production-app, .production-auth, .production-home)
   :is(button, a, select, input, textarea, summary):focus-visible {
   outline-color: var(--ring);
 }
