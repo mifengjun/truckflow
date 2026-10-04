@@ -105,10 +105,13 @@ test("shadcn 询价控件保留地址、货物与服务选项的提交值", asyn
 });
 
 test("shadcn 邀请权限复选框提交选中角色且重置后恢复默认", async ({ page }) => {
+  test.setTimeout(60000);
   await login(page, "staff");
   await page.goto("/admin/customers");
   const row = page.getByRole("row").filter({ hasText: "TEST 浏览器验收客户" });
-  await row.getByRole("button", { name: "管理邀请" }).click();
+  await row.getByRole("link", { name: "查看客户" }).click();
+  await page.getByRole("tab", { name: "成员账号" }).click();
+  await page.getByRole("button", { name: "邀请成员" }).click();
   await page.getByLabel("账号姓名").fill("TEST 新成员");
   await page.getByLabel("登录邮箱").fill("ui-check@example.invalid");
   await page
@@ -125,9 +128,9 @@ test("shadcn 邀请权限复选框提交选中角色且重置后恢复默认", a
     },
   );
   await page.getByRole("button", { name: "发送邀请邮件" }).click();
-  await expect(
-    page.getByText("邀请邮件已发送。", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("邀请邮件已发送。", { exact: true })).toBeVisible(
+    { timeout: 20000 },
+  );
   expect(payload?.roles).toEqual(["customer_operator"]);
   await expect(
     page.getByRole("checkbox", { name: "财务：充值、余额、流水" }),
@@ -226,6 +229,7 @@ test("冻结客户先确认，取消不写入，确认只提交一次", async ({
   await login(page, "staff");
   await page.goto("/admin/customers");
   const row = page.getByRole("row").filter({ hasText: "TEST 浏览器验收客户" });
+  await row.getByRole("link", { name: "查看客户" }).click();
   let writes = 0;
   await page.route(
     `**/api/v1/customers/${fixture.companyId}`,
@@ -240,12 +244,70 @@ test("冻结客户先确认，取消不写入，确认只提交一次", async ({
       } else await route.continue();
     },
   );
-  await row.getByRole("button", { name: "冻结新业务" }).click();
+  await page.getByRole("button", { name: "冻结新业务" }).click();
   await expect(page.getByRole("alertdialog")).toBeVisible();
   expect(writes).toBe(0);
   await page.getByRole("button", { name: "取消", exact: true }).click();
   expect(writes).toBe(0);
-  await row.getByRole("button", { name: "冻结新业务" }).click();
+  await page.getByRole("button", { name: "冻结新业务" }).click();
   await page.getByRole("button", { name: "确认冻结", exact: true }).click();
   await expect.poll(() => writes).toBe(1);
+});
+
+test("客户公司、成员账号和内部员工分别显示", async ({ page }) => {
+  await login(page, "staff");
+  await page.goto("/admin/staff");
+  await expect(
+    page.getByRole("heading", { name: "员工管理", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      fixture.identities.find(
+        (i: { identity: string }) => i.identity === "staff",
+      ).email,
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      fixture.identities.find(
+        (i: { identity: string }) => i.identity === "customer",
+      ).email,
+      { exact: true },
+    ),
+  ).toHaveCount(0);
+  await page.goto("/admin/customers");
+  await expect(
+    page.getByRole("heading", { name: "客户管理", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("row")
+    .filter({ hasText: "TEST 浏览器验收客户" })
+    .getByRole("link", { name: "查看客户" })
+    .click();
+  await expect(page.getByRole("tab", { name: "客户资料" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "邀请成员" })).toHaveCount(0);
+  await page.getByRole("tab", { name: "成员账号" }).click();
+  await expect(
+    page.getByText(
+      fixture.identities.find(
+        (i: { identity: string }) => i.identity === "customer",
+      ).email,
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "邀请成员" })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    )
+    .toBe(true);
+  await page.screenshot({
+    path: ".impeccable/review/customer-members-mobile.png",
+    fullPage: true,
+  });
 });

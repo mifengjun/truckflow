@@ -3,6 +3,7 @@ import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import {
   invitations,
+  staffInvitations,
   profiles,
   customers,
 } from "@/infrastructure/database/schema";
@@ -34,6 +35,12 @@ export async function inviteCustomer(
     .where(eq(customers.id, customerId));
   if (!c || c.status !== "active")
     throw new BusinessError("CUSTOMER_FROZEN", "客户不存在或已冻结", 403);
+  const [staffInvite] = await db
+    .select({ id: staffInvitations.id })
+    .from(staffInvitations)
+    .where(eq(staffInvitations.email, d.email));
+  if (staffInvite)
+    throw new BusinessError("EMAIL_IN_USE", "此邮箱已用于内部员工账号", 409);
   const [prior] = await db
     .select()
     .from(invitations)
@@ -96,15 +103,13 @@ export async function inviteCustomer(
       )
         throw new BusinessError("EMAIL_IN_USE", "此邮箱已属于其他账号", 409);
       if (!existing)
-        await tx
-          .insert(profiles)
-          .values({
-            id: userId!,
-            name: record.name,
-            identity: "customer",
-            customerId,
-            roles: record.roles,
-          });
+        await tx.insert(profiles).values({
+          id: userId!,
+          name: record.name,
+          identity: "customer",
+          customerId,
+          roles: record.roles,
+        });
       await auditAction(
         tx,
         actor,

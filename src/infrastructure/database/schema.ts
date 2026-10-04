@@ -9,6 +9,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import type { InquiryInput, AddressInput } from "@/modules/business/contracts";
+import type { StaffDetails } from "@/modules/business/staff-contracts";
 import type { Role } from "@/modules/business/rules";
 import { sql } from "drizzle-orm";
 export const app = pgSchema("app");
@@ -40,6 +41,7 @@ export const profiles = app.table("profiles", {
   active: boolean().notNull().default(true),
   roles: text().array().$type<Role[]>().notNull(),
   allCustomers: boolean("all_customers").notNull().default(false),
+  version: integer().notNull().default(1),
   createdAt: created(),
 });
 export const staffAccess = app.table("staff_customer_access", {
@@ -56,6 +58,15 @@ export const invitations = app.table("invitations", {
   userId: uuid("user_id"),
   createdBy: uuid("created_by").notNull(),
   errorCode: text("error_code"),
+  createdAt: created(),
+});
+export const staffInvitations = app.table("staff_invitations", {
+  id: id(),
+  email: text().notNull(),
+  details: jsonb().$type<StaffDetails>().notNull(),
+  status: text().notNull().default("pending"),
+  errorCode: text("error_code"),
+  createdBy: uuid("created_by").notNull(),
   createdAt: created(),
 });
 export const addresses = app.table("addresses", {

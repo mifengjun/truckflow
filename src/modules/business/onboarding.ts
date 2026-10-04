@@ -1,9 +1,11 @@
 import "server-only";
+import { staffNeedsPassword } from "./staff-password";
 import { eq, or, sql } from "drizzle-orm";
 import {
   accounts,
   customers,
   invitations,
+  staffInvitations,
   profiles,
   audit,
 } from "@/infrastructure/database/schema";
@@ -29,14 +31,19 @@ export async function getOnboardingState(identity: VerifiedIdentity) {
     .select()
     .from(profiles)
     .where(eq(profiles.id, identity.id));
-  const needsPassword = !p && !(await hasCompletedPasswordSetup(identity));
+  if (p && !p.active) destination(p);
+  const needsPassword = p
+    ? p.identity === "staff" && (await staffNeedsPassword(p.id))
+    : !(await hasCompletedPasswordSetup(identity));
   return {
     needsOnboarding: !p,
     needsPassword,
-    destination: p
-      ? destination(p)
-      : needsPassword
-        ? "/auth/setup?flow=registration"
+    destination: needsPassword
+      ? p
+        ? "/auth/setup"
+        : "/auth/setup?flow=registration"
+      : p
+        ? destination(p)
         : "/onboarding",
   };
 }
@@ -72,7 +79,11 @@ export async function completeOnboarding(
           eq(invitations.email, identity.email),
         ),
       );
-    if (invite)
+    const [staffInvite] = await tx
+      .select({ id: staffInvitations.id })
+      .from(staffInvitations)
+      .where(eq(staffInvitations.email, identity.email));
+    if (invite || staffInvite)
       throw new BusinessError(
         "INVITED_ACCOUNT",
         "此账号已有邀请，请联系管理员完成开通",

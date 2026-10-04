@@ -21,6 +21,11 @@ export async function BusinessLayout({
   if ("error" in result) {
     if (
       result.error instanceof BusinessError &&
+      result.error.code === "PASSWORD_REQUIRED"
+    )
+      redirect("/auth/setup");
+    if (
+      result.error instanceof BusinessError &&
       result.error.code === "UNAUTHENTICATED"
     )
       redirect("/login");

@@ -2971,7 +2971,7 @@ body:has(.production-app, .production-auth, .production-home) {
   margin-top: 0.5rem;
   font-size: 0.875rem;
 }
-.production-app [data-slot="field-label"] {
+:is(.production-app, .production-overlay) [data-slot="field-label"] {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -2980,14 +2980,14 @@ body:has(.production-app, .production-auth, .production-home) {
   font-weight: 500;
   line-height: 1;
 }
-.production-app .field-hint {
+:is(.production-app, .production-overlay) .field-hint {
   font-size: 0.875rem;
 }
-.production-app .field-error,
-.production-app .form-field label > span {
+:is(.production-app, .production-overlay) .field-error,
+:is(.production-app, .production-overlay) .form-field label > span {
   color: var(--destructive);
 }
-.production-app [aria-invalid="true"] {
+:is(.production-app, .production-overlay) [aria-invalid="true"] {
   border-color: var(--destructive);
 }
 .production-app .panel {
@@ -3202,7 +3202,8 @@ fieldset {
 }
 
 /* Native FieldSet owns its layout; legacy fieldset boxes belong to prototypes. */
-:is(.production-app, .production-auth) [data-slot="field-set"] {
+:is(.production-app, .production-auth, .production-overlay)
+  [data-slot="field-set"] {
   border: 0;
   padding: 0;
   border-radius: 0;

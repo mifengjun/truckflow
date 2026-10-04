@@ -4,7 +4,8 @@ import { InquiryForm } from "./InquiryForm";
 import { InquiryList, InquiryDetail } from "./Inquiries";
 import { OrderList, OrderConfirm, OrderDetail } from "./Orders";
 import { FinancePage, Settlement } from "./Finance";
-import { CustomersPage } from "./Customers";
+import { CustomersPage, CustomerDetail } from "./Customers";
+import { StaffPage } from "./Staff";
 import { AddressesPage } from "./Addresses";
 import { Heading, TextLink } from "./shared";
 export function BusinessRouter({
@@ -39,7 +40,9 @@ export function BusinessRouter({
   if (section === "finance" && !staff) return <FinancePage />;
   if (section === "addresses" && !staff) return <AddressesPage />;
   if (section === "settlement" && staff) return <Settlement />;
-  if (section === "customers" && staff) return <CustomersPage />;
+  if (section === "customers" && staff)
+    return id ? <CustomerDetail id={id} /> : <CustomersPage />;
+  if (section === "staff" && staff && !id) return <StaffPage />;
   return (
     <>
       <Heading title="页面不存在" />

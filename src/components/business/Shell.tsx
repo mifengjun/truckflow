@@ -10,6 +10,7 @@ import {
   MapPin,
   Wallet,
   Users,
+  Building2,
   ChevronsUpDown,
   LogOut,
 } from "lucide-react";
@@ -61,7 +62,8 @@ const nav = [
     role: "customer_operator",
   },
   { key: "finance", label: "资金账户", icon: Wallet, role: "customer_finance" },
-  { key: "customers", label: "客户与账号", icon: Users, role: "admin" },
+  { key: "customers", label: "客户管理", icon: Building2, role: "admin" },
+  { key: "staff", label: "员工管理", icon: Users, role: "admin" },
   { key: "settlement", label: "充值核验", icon: Wallet, role: "finance" },
 ];
 export function Shell(props: {
@@ -99,7 +101,10 @@ function Workspace({
     [busy, setBusy] = useState(false);
   const items = nav.filter((n) =>
     staff
-      ? ["orders", "inquiries", "customers", "settlement"].includes(n.key) &&
+      ? ["orders", "inquiries", "customers", "staff", "settlement"].includes(
+          n.key,
+        ) &&
+        (n.key !== "staff" || actor.allCustomers) &&
         actor.roles.includes(n.role as Actor["roles"][number])
       : ["orders", "inquiry", "inquiries", "addresses", "finance"].includes(
           n.key,

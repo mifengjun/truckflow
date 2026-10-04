@@ -156,7 +156,7 @@ export function Loading({
     <>
       <ErrorNotice message={error.message} />
       {retry && (
-        <Button variant="outline" onClick={retry}>
+        <Button type="button" variant="outline" onClick={retry}>
           重试
         </Button>
       )}
@@ -182,7 +182,7 @@ export function Heading({
     <div className="page-heading">
       <div>
         <div className="eyebrow">TRUCKFLOW / 美国 LTL</div>
-        <h1>{title}</h1>
+        <h1 tabIndex={-1}>{title}</h1>
         {description && <p className="page-description">{description}</p>}
       </div>
       {action}

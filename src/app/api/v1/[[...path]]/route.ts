@@ -6,6 +6,7 @@ import { sessionClient } from "@/infrastructure/auth/supabase";
 import { readConfig } from "@/infrastructure/config";
 import { throttle } from "@/infrastructure/auth/throttle";
 import { BusinessError } from "@/modules/business/rules";
+import * as Staff from "@/modules/business/staff";
 import * as Customers from "@/modules/business/customers";
 import * as Addresses from "@/modules/business/addresses";
 import * as Inquiry from "@/modules/business/inquiries";
@@ -180,6 +181,36 @@ async function handler(
       .parse(url.searchParams.get("page") ?? 0);
     const company = url.searchParams.get("customerId");
     if (company) uuid(company);
+    if (p === "staff") {
+      if (method === "GET")
+        return reply(await Staff.staffDirectory(actor, page));
+      if (method === "POST") {
+        Staff.requireStaffAdministrator(actor);
+        await throttle(actor.id, "staff-invite");
+        return reply(await Staff.createStaff(actor, await body()), 201);
+      }
+    }
+    if (p === "staff/customer-options" && method === "GET")
+      return reply(
+        await Staff.customerOptions(
+          actor,
+          url.searchParams.get("search") ?? "",
+          page,
+        ),
+      );
+    if (p === "staff/invitations" && method === "GET")
+      return reply(await Staff.pendingStaffInvitations(actor, page));
+    if (path[0] === "staff" && path[1]) {
+      const id = uuid(path[1]);
+      if (path.length === 2 && method === "GET")
+        return reply(await Staff.staffDetail(actor, id));
+      if (path.length === 2 && method === "PATCH")
+        return reply(await Staff.updateStaff(actor, id, await body()));
+      if (path.length === 3 && path[2] === "invite" && method === "POST") {
+        await throttle(actor.id, "staff-invite");
+        return reply(await Staff.retryStaffInvitation(actor, id));
+      }
+    }
     if (p === "customers")
       return method === "GET"
         ? reply(await Customers.listCustomers(actor))
@@ -197,6 +228,8 @@ async function handler(
           .parse(await body());
         return reply(await Customers.setCustomerStatus(actor, id, d.status));
       }
+      if (path.length === 3 && path[2] === "members" && method === "GET")
+        return reply(await Customers.listCustomerMembers(actor, id, page));
       if (path[2] === "invitations")
         return method === "GET"
           ? reply(await Invites.listInvitations(actor, id))
