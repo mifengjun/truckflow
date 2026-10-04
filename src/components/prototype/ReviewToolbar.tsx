@@ -1,0 +1,9 @@
+'use client';
+import Link from 'next/link';
+import {usePathname} from 'next/navigation';
+import {FlaskConical,RotateCcw,ListTree} from 'lucide-react';
+import {usePrototype} from '@/modules/prototype/provider';
+import type {Scenario} from '@/modules/prototype/mock-adapter';
+import {Button} from '@/components/ui/button';
+import {Dialog} from '@/components/ui/dialog';
+export function ReviewToolbar(){const {scenario,setScenario,reset}=usePrototype();const path=usePathname();const admin=path.includes('/admin');const detail=path.match(/\/orders\/(.+)$/)?.[1];return <div className="review-toolbar"><div className="review-label"><FlaskConical size={15}/><strong>交互原型</strong><span>示例数据</span></div><div className="review-controls"><div className="role-switch"><Link aria-current={!admin?'page':undefined} href={`/prototype/portal/orders${detail?`/${detail}`:''}`}>客户视角</Link><Link aria-current={admin?'page':undefined} href={`/prototype/admin/orders${detail?`/${detail}`:''}`}>管理后台</Link></div><label className="scenario-label"><span>评审场景</span><select aria-label="评审场景" value={scenario} onChange={e=>setScenario(e.target.value as Scenario)}><option value="default">默认状态</option><option value="loading">加载中</option><option value="empty">无数据 / 无报价</option><option value="error">网络失败</option><option value="denied">无权限</option><option value="long">长文本</option><option value="partial">部分报价失败</option><option value="expired">报价过期</option><option value="carrier-success">承运商 · 成功</option><option value="carrier-failed">承运商 · 失败</option><option value="carrier-timeout">承运商 · 超时</option></select></label><Link className="review-link" href="/prototype/index"><ListTree size={15}/>页面索引</Link><Dialog trigger={<button className="review-link"><RotateCcw size={14}/>重置</button>} title="重置示例数据" description="会清除本浏览器保存的询价草稿和新建示例订单。此操作只影响原型。"><Button onClick={()=>{reset();window.location.assign('/prototype/portal/orders');}}>确认重置示例数据</Button></Dialog></div></div>;}
