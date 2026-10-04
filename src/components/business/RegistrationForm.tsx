@@ -16,7 +16,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthFrame } from "./AuthFrame";
 import { api, ErrorNotice } from "./shared";
-type Values = { email: string; password: string; confirmPassword: string };
+type Values = { email: string };
 export function RegistrationForm({ enabled }: { enabled: boolean }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -26,12 +26,12 @@ export function RegistrationForm({ enabled }: { enabled: boolean }) {
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(registrationInput),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+    defaultValues: { email: "" },
   });
   return (
     <AuthFrame
       title="注册客户账号"
-      description="验证邮箱并填写客户资料后，即可提交询价。询价无需充值。"
+      description="先验证邮箱，再设置密码和填写客户资料。询价无需充值。"
     >
       <form
         onSubmit={handleSubmit(async (values) => {
@@ -61,18 +61,6 @@ export function RegistrationForm({ enabled }: { enabled: boolean }) {
                 type: "email",
                 autoComplete: "email",
               },
-              {
-                name: "password",
-                label: "密码",
-                type: "password",
-                autoComplete: "new-password",
-              },
-              {
-                name: "confirmPassword",
-                label: "再次输入密码",
-                type: "password",
-                autoComplete: "new-password",
-              },
             ] as const
           ).map((f) => (
             <Field key={f.name} data-invalid={!!errors[f.name]}>
@@ -95,11 +83,10 @@ export function RegistrationForm({ enabled }: { enabled: boolean }) {
             </Field>
           ))}
           <p className="text-sm text-muted-foreground">
-            密码至少 6
-            位，包含字母和数字。已有客户的同事账号请通过管理员邀请加入。
+            验证邮件发送后，请点击邮件中的链接继续注册。已有客户的同事账号请通过管理员邀请加入。
           </p>
           <Button disabled={!enabled || isSubmitting}>
-            {isSubmitting ? "正在提交…" : "注册并发送验证邮件"}
+            {isSubmitting ? "正在提交…" : "发送验证邮件"}
           </Button>
           <Button variant="link" asChild>
             <Link href="/login">已有账号登录</Link>

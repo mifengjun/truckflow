@@ -8,7 +8,13 @@ import { passwordInput } from "@/modules/business/auth-contracts";
 import { AuthFrame } from "./AuthFrame";
 import { Button } from "@/components/ui/button";
 import { api, Field, ErrorNotice } from "./shared";
-export function AuthForm({ setup = false }: { setup?: boolean }) {
+export function AuthForm({
+  setup = false,
+  registration = false,
+}: {
+  setup?: boolean;
+  registration?: boolean;
+}) {
   const [mode, setMode] = useState(setup ? "setup" : "login"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -20,7 +26,7 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
     const access_token = params.get("access_token"),
       refresh_token = params.get("refresh_token");
     if (params.get("error_description")) {
-      queueMicrotask(() => setError("邀请链接已失效，请联系管理员重新发送。"));
+      queueMicrotask(() => setError("验证链接已失效，请重新获取邮件。"));
       history.replaceState(null, "", window.location.pathname);
       return;
     }
@@ -73,7 +79,9 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
       }
       description={
         mode === "setup"
-          ? "请设置至少 6 位密码，包含字母和数字。"
+          ? registration
+            ? "邮箱已验证。设置登录密码后，继续完善客户资料。密码至少 6 位，包含字母和数字。"
+            : "请设置至少 6 位密码，包含字母和数字。"
           : "登录客户中心提交询价，或进入运营后台处理业务。"
       }
     >
@@ -84,7 +92,7 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
         </Alert>
       )}
       {accepting ? (
-        <p role="status">正在验证邀请…</p>
+        <p role="status">正在验证邮件…</p>
       ) : (
         <form className="business-stack" onSubmit={submit}>
           <FieldGroup>
@@ -120,7 +128,9 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
               {busy
                 ? "处理中…"
                 : mode === "setup"
-                  ? "设置密码并进入系统"
+                  ? registration
+                    ? "设置密码并继续"
+                    : "设置密码并进入系统"
                   : mode === "recover"
                     ? "发送密码设置邮件"
                     : "登录"}

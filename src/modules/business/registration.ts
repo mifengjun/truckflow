@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { readConfig } from "@/infrastructure/config";
 import { throttle } from "@/infrastructure/auth/throttle";
-import { registrationInput, emailInput } from "./auth-contracts";
+import { registrationInput } from "./auth-contracts";
 import { BusinessError } from "./rules";
 export function registrationEnabled() {
   return process.env.REGISTRATION_ENABLED === "true";
@@ -41,26 +41,19 @@ function checkMailError(error: { code?: string } | null) {
 export async function registerCustomer(value: unknown) {
   const d = registrationInput.parse(value),
     client = publicRegistrationClient();
+  // Initial sends and resends share a limit; both can resume unfinished registration.
   await throttle(d.email, "signup");
-  const { error } = await client.auth.signUp({
+  const { error } = await client.auth.signInWithOtp({
     email: d.email,
-    password: d.password,
-    options: { emailRedirectTo: `${readConfig().origin}/auth/verify` },
-  });
-  checkMailError(error);
-  return { message: "请检查邮箱中的验证邮件；如已有账号，请登录或找回密码。" };
-}
-export async function resendSignupVerification(value: unknown) {
-  const d = emailInput.parse(value),
-    client = publicRegistrationClient();
-  await throttle(d.email, "signup-resend");
-  const { error } = await client.auth.resend({
-    type: "signup",
-    email: d.email,
-    options: { emailRedirectTo: `${readConfig().origin}/auth/verify` },
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: `${readConfig().origin}/auth/verify`,
+    },
   });
   checkMailError(error);
   return {
-    message: "如该邮箱需要验证，将收到新的验证邮件，请检查收件箱及垃圾邮件。",
+    email: d.email,
+    message: "验证邮件已发送，请检查收件箱及垃圾邮件。",
   };
 }
+export const resendSignupVerification = registerCustomer;

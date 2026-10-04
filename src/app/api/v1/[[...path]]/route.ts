@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { requireActor } from "@/infrastructure/auth/actor";
@@ -76,10 +77,19 @@ async function handler(
         throw new BusinessError("INVALID_JSON", "请求内容格式错误", 400);
       }
     };
-    if (p === "auth/register" && method === "POST")
-      return reply(await registerCustomer(await body()));
-    if (p === "auth/resend" && method === "POST")
-      return reply(await resendSignupVerification(await body()));
+    if ((p === "auth/register" || p === "auth/resend") && method === "POST") {
+      const result = await (
+        p === "auth/register" ? registerCustomer : resendSignupVerification
+      )(await body());
+      (await cookies()).set("registration-email", result.email, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: readConfig().origin.startsWith("https:"),
+        path: "/",
+        maxAge: 3600,
+      });
+      return reply(result);
+    }
     if (p === "auth/onboarding") {
       const identity = await requireVerifiedIdentity();
       if (method === "GET") return reply(await getOnboardingState(identity));
@@ -149,17 +159,15 @@ async function handler(
         .object({ password: passwordInput })
         .strict()
         .parse(await body());
-      const state = await getOnboardingState(await requireVerifiedIdentity());
+      const identity = await requireVerifiedIdentity();
       const { error } = await (await sessionClient()).auth.updateUser(d);
       if (error)
         throw new BusinessError(
           "PASSWORD_FAILED",
-          "密码未更新，请重试或重新获取邀请",
+          "密码未更新，请重试或重新获取验证邮件",
           422,
         );
-      return reply({
-        destination: state.destination,
-      });
+      return reply(await getOnboardingState(identity));
     }
     const actor = await requireActor();
     if (p === "me" && method === "GET")

@@ -9,6 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 // remains disabled until SMTP is configured; the callback and UI use real Auth.
 test("邮箱验证后完善资料并提交首次询价", async ({ page, browser }) => {
   test.setTimeout(90000);
+  page.setDefaultTimeout(15000);
   const env = parseEnv(readFileSync(".env.local", "utf8"));
   if (
     env.APP_ENV === "production" ||
@@ -34,19 +35,27 @@ test("邮箱验证后完善资料并提交首次询价", async ({ page, browser 
   let id: string | undefined;
   try {
     const { data, error } = await auth.auth.admin.generateLink({
-      type: "signup",
+      type: "magiclink",
       email,
-      password: randomUUID() + "Aa1!",
     });
     if (error || !data.user || !data.properties?.hashed_token)
       throw Error("Disposable signup link failed");
     id = data.user.id;
     await page.goto(
-      `/auth/confirm?type=signup&token_hash=${encodeURIComponent(data.properties.hashed_token)}`,
+      `/auth/confirm?type=email&token_hash=${encodeURIComponent(data.properties.hashed_token)}`,
     );
+    await expect(page).toHaveURL(/\/auth\/setup\?flow=registration$/, {
+      timeout: 20000,
+    });
+    await page.reload();
+    await page.getByLabel(/^密码/).fill("NewCustomer123!");
+    await page.getByLabel("再次输入密码").fill("NewCustomer123!");
+    await page.getByRole("button", { name: "设置密码并继续" }).click();
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20000 });
+    await page.goto("/auth/setup?flow=registration");
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20000 });
     await page.getByLabel("公司或业务名称").fill("TEST Browser Self Signup");
-    await page.getByLabel("联系人", { exact: true }).fill("TEST Contact");
+    await page.getByLabel("联系人").fill("TEST Contact");
     await page.getByLabel("联系电话").fill("+86 13800000000");
     await page.getByRole("button", { name: "保存并开始询价" }).click();
     await expect(page).toHaveURL(/\/portal\/inquiry$/, { timeout: 20000 });
@@ -66,7 +75,7 @@ test("邮箱验证后完善资料并提交首次询价", async ({ page, browser 
     await page
       .locator("#pickupDate")
       .fill(new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-    await page.getByRole("button", { name: "下一步：货物与服务" }).click();
+    await page.getByRole("button", { name: "下一步", exact: true }).click();
     for (const [key, value] of Object.entries({
       name: "TEST Goods",
       quantity: "1",
@@ -114,7 +123,12 @@ test("邮箱验证后完善资料并提交首次询价", async ({ page, browser 
       await operator
         .getByRole("button", { name: "发布给客户", exact: true })
         .click();
-      await expect(operator.getByText("已发布", { exact: true })).toBeVisible();
+      await operator
+        .getByRole("button", { name: "确认发布", exact: true })
+        .click();
+      await expect(
+        operator.getByText("客户已可查看此方案", { exact: true }),
+      ).toBeVisible();
       await page.reload();
       await expect(
         page.getByText("TEST Browser Carrier", { exact: true }),

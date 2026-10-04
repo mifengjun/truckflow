@@ -31,6 +31,7 @@ export default async function Page() {
       </AuthFrame>
     );
   }
-  if (!result.state.needsOnboarding) redirect(result.state.destination);
+  if (result.state.needsPassword || !result.state.needsOnboarding)
+    redirect(result.state.destination);
   return <OnboardingForm email={result.identity.email} />;
 }

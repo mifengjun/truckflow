@@ -17,22 +17,14 @@ export const emailInput = z
     email: z.email("请输入有效邮箱").transform((v) => v.toLowerCase()),
   })
   .strict();
-export const registrationInput = emailInput
-  .extend({
-    password: passwordInput,
-    confirmPassword: z.string().min(1, "请再次输入密码"),
-  })
-  .strict()
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "两次密码不一致",
-    path: ["confirmPassword"],
-  });
+export const registrationInput = emailInput;
 export function confirmationDestination(type: string, next: string) {
-  if (!["signup", "invite", "recovery"].includes(type))
+  if (!["signup", "email", "magiclink", "invite", "recovery"].includes(type))
     throw new Error("Invalid confirmation type");
   if (
     ![
       "/onboarding",
+      "/auth/setup?flow=registration",
       "/portal/orders",
       "/portal/finance",
       "/admin/orders",
@@ -41,5 +33,5 @@ export function confirmationDestination(type: string, next: string) {
     ].includes(next)
   )
     throw new Error("Invalid destination");
-  return type === "signup" ? next : "/auth/setup";
+  return type === "invite" || type === "recovery" ? "/auth/setup" : next;
 }

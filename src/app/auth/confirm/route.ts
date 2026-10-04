@@ -12,10 +12,14 @@ export async function GET(req: Request) {
     type = url.searchParams.get("type");
   const result = code
     ? await client.auth.exchangeCodeForSession(code)
-    : hash && ["signup", "invite", "recovery"].includes(type ?? "")
+    : hash &&
+        ["signup", "email", "magiclink", "invite", "recovery"].includes(
+          type ?? "",
+        )
       ? await client.auth.verifyOtp({
           token_hash: hash,
-          type: type as "signup" | "invite" | "recovery",
+          type: type as
+            "signup" | "email" | "magiclink" | "invite" | "recovery",
         })
       : { error: true };
   let destination = "/auth/verify?status=invalid";

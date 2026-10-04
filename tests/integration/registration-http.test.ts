@@ -28,17 +28,20 @@ async function request(
   });
 }
 beforeAll(async () => {
-  for (const confirmed of [true, false, true]) {
+  for (const [index, confirmed] of [true, false, true, true].entries()) {
     const credential = {
       email: `qa-registration-${randomUUID()}@example.invalid`,
       password: randomUUID() + "Aa1!",
     };
     const { data, error } = await auth.auth.admin.createUser({
-      ...credential,
+      email: credential.email,
+      ...(index < 3 ? { password: credential.password } : {}),
       email_confirm: confirmed,
     });
     if (error || !data.user) throw Error("QA creation failed");
     users.push({ id: data.user.id, ...credential });
+    if (index < 3)
+      await adminDb`insert into app.registration_passwords(user_id) values(${data.user.id})`;
   }
 });
 afterAll(async () => {
@@ -106,8 +109,6 @@ it("keeps public signup closed until real email delivery is configured", async (
     "auth/register",
     {
       email: "qa-no-send@example.invalid",
-      password: "LongPassword123!",
-      confirmPassword: "LongPassword123!",
     },
     "",
   );
@@ -149,11 +150,68 @@ it("allows verified users to set a six-character password before onboarding", as
     .getSetCookie()
     .map((c) => c.split(";")[0])
     .join("; ");
-  const reset = await request(
-    "auth/password",
-    { password: "abc123" },
-    session,
-  );
+  const reset = await request("auth/password", { password: "abc123" }, session);
   expect(reset.status).toBe(200);
   expect(await reset.json()).toMatchObject({ destination: "/onboarding" });
+});
+
+it("verifies an email-only account and resumes at password setup before onboarding", async () => {
+  const { data, error } = await auth.auth.admin.generateLink({
+    type: "magiclink",
+    email: users[3].email,
+  });
+  expect(error).toBeNull();
+  const response = await fetch(
+    `${origin}/auth/confirm?type=email&token_hash=${encodeURIComponent(data.properties!.hashed_token)}`,
+    { redirect: "manual" },
+  );
+  expect(response.headers.get("location")).toBe(
+    `${origin}/auth/setup?flow=registration`,
+  );
+  const session = response.headers
+    .getSetCookie()
+    .map((c) => c.split(";")[0])
+    .join("; ");
+  const state = await request("auth/onboarding", undefined, session);
+  expect(await state.json()).toMatchObject({ needsPassword: true });
+  const { data: pendingLink, error: pendingError } =
+    await auth.auth.admin.generateLink({
+      type: "magiclink",
+      email: users[3].email,
+    });
+  expect(pendingError).toBeNull();
+  const pending = await fetch(
+    `${origin}/auth/confirm?type=email&token_hash=${encodeURIComponent(pendingLink.properties!.hashed_token)}`,
+    { redirect: "manual" },
+  );
+  expect(pending.headers.get("location")).toBe(
+    `${origin}/auth/setup?flow=registration`,
+  );
+  const skipped = await request(
+    "auth/onboarding",
+    { companyName: "TEST", contact: "TEST", phone: "1234567" },
+    session,
+  );
+  expect(skipped.status).toBe(403);
+  const setup = await request("auth/password", { password: "abc123" }, session);
+  expect(setup.status).toBe(200);
+  expect(await setup.json()).toMatchObject({
+    destination: "/onboarding",
+    needsPassword: false,
+  });
+  const resumed = await request(
+    "auth/login",
+    { email: users[3].email, password: "abc123" },
+    "",
+  );
+  expect(await resumed.json()).toMatchObject({ destination: "/onboarding" });
+  const { data: again } = await auth.auth.admin.generateLink({
+    type: "magiclink",
+    email: users[3].email,
+  });
+  const revisited = await fetch(
+    `${origin}/auth/confirm?type=magiclink&token_hash=${encodeURIComponent(again.properties!.hashed_token)}`,
+    { redirect: "manual" },
+  );
+  expect(revisited.headers.get("location")).toBe(`${origin}/onboarding`);
 });

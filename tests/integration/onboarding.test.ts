@@ -18,15 +18,21 @@ const input = {
   phone: "+86 13800000000",
 };
 beforeAll(async () => {
-  for (let n = 0; n < 2; n++) {
+  for (let n = 0; n < 3; n++) {
     const email = `qa-onboarding-${randomUUID()}@example.invalid`;
     const { data, error } = await auth.auth.admin.createUser({
       email,
-      password: randomUUID() + "Aa!1",
+      ...(n < 2 ? { password: randomUUID() + "Aa!1" } : {}),
       email_confirm: true,
     });
     if (error || !data.user) throw Error("QA creation failed");
     identities.push({ id: data.user.id, email });
+    if (n < 2) {
+      const result = await auth.auth.admin.updateUserById(data.user.id, {
+        password: randomUUID() + "Aa1!",
+      });
+      if (result.error) throw result.error;
+    }
   }
 });
 afterAll(async () => {
@@ -118,4 +124,22 @@ it("does not claim a pending invited identity", async () => {
   } finally {
     await adminDb`delete from app.invitations where email=${email}`;
   }
+});
+
+it("requires a real password before provisioning, including after resuming", async () => {
+  expect(await getOnboardingState(identities[2])).toMatchObject({
+    needsPassword: true,
+    destination: "/auth/setup?flow=registration",
+  });
+  await expect(completeOnboarding(identities[2], input)).rejects.toMatchObject({
+    code: "PASSWORD_REQUIRED",
+  });
+  const { error } = await auth.auth.admin.updateUserById(identities[2].id, {
+    password: "TestResume123!",
+  });
+  expect(error).toBeNull();
+  expect(await getOnboardingState(identities[2])).toMatchObject({
+    needsPassword: false,
+    destination: "/onboarding",
+  });
 });

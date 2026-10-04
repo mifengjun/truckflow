@@ -3,23 +3,31 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldGroup } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthFrame } from "./AuthFrame";
 import { api, ErrorNotice } from "./shared";
 export function VerificationNotice({
   invalid,
   enabled,
+  email,
 }: {
   invalid: boolean;
   enabled: boolean;
+  email: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState(""),
     [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [failed, setFailed] = useState(invalid),
+    [seconds, setSeconds] = useState(email && !invalid ? 60 : 0);
   const started = useRef(false);
+  useEffect(() => {
+    if (seconds <= 0) return;
+    const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [seconds]);
   useEffect(() => {
     if (started.current) return;
     started.current = true;
@@ -32,10 +40,20 @@ export function VerificationNotice({
         "",
         window.location.pathname + window.location.search,
       );
-    if (p.has("error")) {
-      queueMicrotask(() =>
-        setError("验证链接已失效，请重新发送验证邮件或返回登录。"),
-      );
+    const go = (r: { destination: string }) => {
+      router.replace(r.destination);
+      router.refresh();
+    };
+    if (p.has("error") || invalid) {
+      queueMicrotask(() => setFailed(true));
+      // A consumed link can still resume an already verified session.
+      api<{ destination: string }>("auth/onboarding")
+        .then(go)
+        .catch(() =>
+          setError(
+            "验证链接已使用或过期。请重新发送邮件，已有账号也可直接登录。",
+          ),
+        );
       return;
     }
     if (access_token && refresh_token) {
@@ -44,72 +62,79 @@ export function VerificationNotice({
         access_token,
         refresh_token,
       })
-        .then((r) => {
-          router.replace(r.destination);
-          router.refresh();
+        .then(go)
+        .catch((e) => {
+          setFailed(true);
+          setError(e.message);
         })
-        .catch((e) => setError(e.message))
         .finally(() => setBusy(false));
     }
-  }, [router]);
+  }, [router, invalid]);
   return (
     <AuthFrame
-      title={invalid ? "验证链接无法使用" : "验证你的邮箱"}
+      title={
+        failed ? "验证链接无法使用" : email ? "请查收验证邮件" : "验证你的邮箱"
+      }
       description={
-        invalid
-          ? "链接可能已使用或过期。已验证过的账号可直接登录，否则请重新发送。"
-          : "请打开邮件中的验证链接，然后完善客户资料。也请检查垃圾邮件文件夹。"
+        failed
+          ? "重新获取邮件即可继续注册。已完成注册的账号可直接登录。"
+          : "点击邮件中的链接验证邮箱，然后设置密码。没找到邮件时，也请检查垃圾邮件文件夹。"
       }
     >
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError("");
-          const email = new FormData(e.currentTarget).get("email");
-          try {
-            const r = await api<{ message: string }>("auth/resend", "POST", {
-              email,
-            });
-            setMessage(r.message);
-          } catch (e) {
-            setError((e as Error).message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <FieldGroup>
-          <ErrorNotice message={error} />
-          {message && (
-            <Alert role="status">
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
-          )}
-          {!enabled && (
-            <Alert>
-              <AlertDescription>
-                邮件服务待配置，暂时无法发送验证邮件。已有账号请直接登录。
-              </AlertDescription>
-            </Alert>
-          )}
-          {busy && <p role="status">正在处理验证…</p>}
-          <Field>
-            <FieldLabel htmlFor="verify-email">注册邮箱</FieldLabel>
-            <Input
-              id="verify-email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-            />
-          </Field>
-          <Button disabled={busy || !enabled}>重新发送验证邮件</Button>
-          <Button variant="link" asChild>
-            <Link href="/login">返回登录</Link>
+      <FieldGroup>
+        <ErrorNotice message={error} />
+        {email && (
+          <p className="text-sm break-all">
+            验证邮件已发送至 <strong>{email}</strong>
+          </p>
+        )}
+        {message && (
+          <Alert role="status">
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
+        {!enabled && (
+          <Alert>
+            <AlertDescription>
+              邮件服务待配置，暂时无法发送验证邮件。已有账号请直接登录。
+            </AlertDescription>
+          </Alert>
+        )}
+        {busy && <p role="status">正在处理验证…</p>}
+        {email && (
+          <Button
+            disabled={busy || !enabled || seconds > 0}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              setMessage("");
+              try {
+                const r = await api<{ message: string }>(
+                  "auth/resend",
+                  "POST",
+                  { email },
+                );
+                setMessage(r.message);
+                setSeconds(60);
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {seconds > 0 ? `${seconds} 秒后可重新发送` : "重新发送验证邮件"}
           </Button>
-        </FieldGroup>
-      </form>
+        )}
+        <Button variant="outline" asChild>
+          <Link href="/register">
+            {email ? "修改邮箱" : "重新获取验证邮件"}
+          </Link>
+        </Button>
+        <Button variant="link" asChild>
+          <Link href="/login">返回登录</Link>
+        </Button>
+      </FieldGroup>
     </AuthFrame>
   );
 }

@@ -15,14 +15,29 @@ function destination(p: typeof profiles.$inferSelect) {
   if (!p.active) throw new BusinessError("ACCOUNT_DISABLED", "账号已停用", 403);
   return homeForActor({ ...p, customerIds: [] } as Actor);
 }
+async function hasCompletedPasswordSetup(
+  identity: VerifiedIdentity,
+  db: Pick<ReturnType<typeof database>, "execute"> = database(),
+) {
+  const rows = await db.execute(
+    sql`select exists(select 1 from app.registration_passwords where user_id=${identity.id}::uuid) as ready`,
+  );
+  return rows[0]?.ready === true;
+}
 export async function getOnboardingState(identity: VerifiedIdentity) {
   const [p] = await database()
     .select()
     .from(profiles)
     .where(eq(profiles.id, identity.id));
+  const needsPassword = !p && !(await hasCompletedPasswordSetup(identity));
   return {
     needsOnboarding: !p,
-    destination: p ? destination(p) : "/onboarding",
+    needsPassword,
+    destination: p
+      ? destination(p)
+      : needsPassword
+        ? "/auth/setup?flow=registration"
+        : "/onboarding",
   };
 }
 export async function completeOnboarding(
@@ -63,6 +78,8 @@ export async function completeOnboarding(
         "此账号已有邀请，请联系管理员完成开通",
         409,
       );
+    if (!(await hasCompletedPasswordSetup(identity, tx)))
+      throw new BusinessError("PASSWORD_REQUIRED", "请先设置账号密码", 403);
     const [c] = await tx
       .insert(customers)
       .values({
@@ -74,23 +91,19 @@ export async function completeOnboarding(
       })
       .returning();
     await tx.insert(accounts).values({ customerId: c.id });
-    await tx
-      .insert(profiles)
-      .values({
-        id: identity.id,
-        name: d.contact,
-        identity: "customer",
-        customerId: c.id,
-        roles: ["customer_operator", "customer_finance"],
-      });
-    await tx
-      .insert(audit)
-      .values({
-        actorId: identity.id,
-        customerId: c.id,
-        action: "customer.self_signup",
-        resourceId: c.id,
-      });
+    await tx.insert(profiles).values({
+      id: identity.id,
+      name: d.contact,
+      identity: "customer",
+      customerId: c.id,
+      roles: ["customer_operator", "customer_finance"],
+    });
+    await tx.insert(audit).values({
+      actorId: identity.id,
+      customerId: c.id,
+      action: "customer.self_signup",
+      resourceId: c.id,
+    });
     return { customerId: c.id, destination: "/portal/inquiry" };
   });
 }

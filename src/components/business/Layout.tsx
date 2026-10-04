@@ -31,7 +31,7 @@ export async function BusinessLayout({
       const state = await requireVerifiedIdentity()
         .then(getOnboardingState)
         .catch(() => null);
-      if (state?.needsOnboarding) redirect("/onboarding");
+      if (state?.needsOnboarding) redirect(state.destination);
     }
     return (
       <AuthFrame
