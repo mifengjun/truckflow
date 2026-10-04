@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/native-select";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId, useRef, type RefObject } from "react";
+import { OperationPanel } from "./OperationPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,16 +277,42 @@ export function OrderDetail({
   id: string;
   staff?: boolean;
 }) {
-  const q = useData<Order>(`orders/${id}`);
+  const q = useData<Order>("orders/" + id);
+  const [action, setAction] = useState<"operations" | "document" | null>(null);
+  const [message, setMessage] = useState("");
+  const returnFocus = useRef<HTMLElement | null>(null);
   if (!q.data) return <Loading error={q.error} retry={() => q.refetch()} />;
   const o = q.data;
+  const base = staff ? "/admin" : "/portal";
   return (
     <>
       <Heading
         title={o.number}
-        description={`提交于 ${time(o.createdAt)}`}
-        action={<Status value={o.status} />}
+        description={"提交于 " + time(o.createdAt)}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            <Status value={o.status} />
+            {staff && o.fulfillment !== "delivered" && (
+              <Button
+                onClick={(event) => {
+                  returnFocus.current = event.currentTarget;
+                  setAction("operations");
+                }}
+              >
+                处理订单
+              </Button>
+            )}
+            <Button variant="outline" asChild>
+              <Link href={base + "/orders"}>返回订单列表</Link>
+            </Button>
+          </div>
+        }
       />
+      {message && (
+        <Alert role="status">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
       {o.status === "unknown" && (
         <Alert variant="warning">
           <AlertDescription>
@@ -292,35 +320,76 @@ export function OrderDetail({
           </AlertDescription>
         </Alert>
       )}
-      <div className="business-detail">
-        <div>
+      {!staff && o.status !== "unknown" && (
+        <Alert>
+          <AlertDescription>
+            {o.status === "accepted"
+              ? "承运商已接单，运费已扣款。"
+              : o.status === "failed"
+                ? "已确认拒单，冻结运费已释放。"
+                : "运费已冻结，运营正在处理订单。"}
+          </AlertDescription>
+        </Alert>
+      )}
+      <Tabs defaultValue="shipment" className="gap-6">
+        <TabsList
+          aria-label="订单详情"
+          className="grid w-full max-w-xl grid-cols-4"
+        >
+          <TabsTrigger value="shipment">运输资料</TabsTrigger>
+          <TabsTrigger value="fees">费用运单</TabsTrigger>
+          <TabsTrigger value="documents">单据</TabsTrigger>
+          <TabsTrigger value="history">处理记录</TabsTrigger>
+        </TabsList>
+        <TabsContent value="shipment">
           <Shipment data={o.snapshot.inquiry} />
-          <BusinessSection title={<>费用与运单</>}>
-            <div className="panel-header">
-              <strong>{usd(o.amount)}</strong>
+        </TabsContent>
+        <TabsContent value="fees">
+          <BusinessSection title="费用与运单">
+            <div className="flex flex-col gap-4">
+              <strong className="text-2xl tabular-nums">{usd(o.amount)}</strong>
+              <p>承运商：{o.snapshot.carrier}</p>
+              <p>承运商单号：{o.externalId || "等待确认"}</p>
+              <p>跟踪号：{o.tracking || "暂无"}</p>
+              <p>
+                运输进度：
+                <Status value={o.fulfillment} />
+              </p>
+              <Separator />
+              {o.snapshot.fees.map((f, n) => (
+                <div className="business-money-row" key={n}>
+                  <span>{f.label}</span>
+                  <span>{usd(f.amount)}</span>
+                </div>
+              ))}
             </div>
-            <p>承运商：{o.snapshot.carrier}</p>
-            <p>承运商单号：{o.externalId || "等待确认"}</p>
-            <p>跟踪号：{o.tracking || "暂无"}</p>
-            <p>
-              运输进度：
-              <Status value={o.fulfillment} />
-            </p>
-            {o.snapshot.fees.map((f, n) => (
-              <div className="business-money-row" key={n}>
-                <span>{f.label}</span>
-                <span>{usd(f.amount)}</span>
-              </div>
-            ))}
-            <Separator className="business-rule" />
-            <h3>订单单据</h3>
+          </BusinessSection>
+        </TabsContent>
+        <TabsContent value="documents">
+          <BusinessSection
+            title="订单单据"
+            description="提货单、签收单及其他运输资料。"
+            footer={
+              staff && (
+                <Button
+                  onClick={(event) => {
+                    returnFocus.current = event.currentTarget;
+                    setMessage("");
+                    setAction("document");
+                  }}
+                >
+                  上传单据
+                </Button>
+              )
+            }
+          >
             {o.documents.length ? (
-              <ul>
+              <ul className="flex flex-col gap-4">
                 {o.documents.map((d) => (
                   <li key={d.id}>
                     <a
-                      className="business-link"
-                      href={`/api/v1/attachments/${d.id}/download`}
+                      className="business-link break-all"
+                      href={"/api/v1/attachments/" + d.id + "/download"}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -330,45 +399,68 @@ export function OrderDetail({
                 ))}
               </ul>
             ) : (
-              <Empty text="暂无单据，运营上传后可下载" />
+              <Empty
+                text={
+                  staff
+                    ? "暂无单据，可点击上传单据"
+                    : "暂无单据，运营上传后可下载"
+                }
+              />
             )}
-            {staff && <DocumentUpload orderId={id} />}
           </BusinessSection>
-          <BusinessSection title={<>处理记录</>}>
-            <ul className="business-timeline">
-              {o.timeline.map((e) => (
-                <li key={e.id}>
-                  <small className="muted">
-                    {time(e.createdAt)}
-                    {e.visibility === "internal" ? " · 内部依据" : ""}
-                  </small>
-                  <p>{e.detail}</p>
-                </li>
-              ))}
-            </ul>
+        </TabsContent>
+        <TabsContent value="history">
+          <BusinessSection title="处理记录">
+            {o.timeline.length ? (
+              <ul className="business-timeline">
+                {o.timeline.map((e) => (
+                  <li key={e.id}>
+                    <small className="muted">
+                      {time(e.createdAt)}
+                      {e.visibility === "internal" ? " · 内部依据" : ""}
+                    </small>
+                    <p>{e.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty text="暂无处理记录" />
+            )}
           </BusinessSection>
-        </div>
-        {staff ? (
-          <OrderOperations order={o} />
-        ) : (
-          <BusinessSection title={<>订单状态</>}>
-            <p className="page-description">
-              {o.status === "accepted"
-                ? "承运商已接单，运费已扣款。"
-                : o.status === "failed"
-                  ? "已确认拒单，冻结运费已释放。"
-                  : "运费已冻结，运营正在处理订单。"}
-            </p>
-            <div className="business-actions">
-              <TextLink href="/portal/orders">返回订单列表</TextLink>
-            </div>
-          </BusinessSection>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
+      {staff && action === "operations" && (
+        <OrderOperations
+          order={o}
+          returnFocus={returnFocus}
+          onClose={() => setAction(null)}
+        />
+      )}
+      {staff && action === "document" && (
+        <DocumentUpload
+          orderId={id}
+          returnFocus={returnFocus}
+          onClose={() => setAction(null)}
+          onSaved={() => {
+            setAction(null);
+            setMessage("单据已上传。");
+          }}
+        />
+      )}
     </>
   );
 }
-function OrderOperations({ order: o }: { order: Order }) {
+function OrderOperations({
+  order,
+  onClose,
+  returnFocus,
+}: {
+  order: Order;
+  onClose: () => void;
+  returnFocus: RefObject<HTMLElement | null>;
+}) {
+  // Keep the form and its expected version together across background refreshes.
+  const [o, setOrder] = useState(order);
   const operation = useOperation(),
     [result, setResult] = useState("unknown");
   const next =
@@ -378,7 +470,26 @@ function OrderOperations({ order: o }: { order: Order }) {
         ? "in_transit"
         : "delivered";
   return (
-    <BusinessSection title={<>订单处理</>}>
+    <OperationPanel
+      open
+      onClose={onClose}
+      returnFocus={returnFocus}
+      busy={operation.busy}
+      title="订单处理"
+      description={
+        o.number + " · " + o.snapshot.carrier + " · " + usd(o.amount)
+      }
+      footer={
+        <Button
+          type="button"
+          variant="outline"
+          disabled={operation.busy}
+          onClick={onClose}
+        >
+          关闭
+        </Button>
+      }
+    >
       <ErrorNotice message={operation.error} />
       {["pending_review", "failed"].includes(o.status) && (
         <>
@@ -390,13 +501,20 @@ function OrderOperations({ order: o }: { order: Order }) {
           <div className="business-actions">
             <Button
               disabled={operation.busy}
-              onClick={() =>
-                operation.run(() =>
-                  api(`orders/${o.id}/start`, "POST", {
-                    expectedVersion: o.version,
-                  }),
-                )
-              }
+              onClick={async () => {
+                const started = await operation.run(() =>
+                  api<{ status: string; version: number }>(
+                    `orders/${o.id}/start`,
+                    "POST",
+                    {
+                      expectedVersion: o.version,
+                    },
+                  ),
+                );
+                // Only our successful transition advances this open form.
+                if (started)
+                  setOrder((current) => ({ ...current, ...started }));
+              }}
             >
               {operation.busy
                 ? "处理中…"
@@ -413,7 +531,7 @@ function OrderOperations({ order: o }: { order: Order }) {
           onSubmit={async (e) => {
             e.preventDefault();
             const d = new FormData(e.currentTarget);
-            await operation.run(() =>
+            const saved = await operation.run(() =>
               api(`orders/${o.id}/result`, "POST", {
                 expectedVersion: o.version,
                 result,
@@ -429,6 +547,7 @@ function OrderOperations({ order: o }: { order: Order }) {
                   : {}),
               }),
             );
+            if (saved) onClose();
           }}
         >
           <FieldGroup>
@@ -481,13 +600,14 @@ function OrderOperations({ order: o }: { order: Order }) {
           onSubmit={async (e) => {
             e.preventDefault();
             const evidence = new FormData(e.currentTarget).get("evidence");
-            await operation.run(() =>
+            const saved = await operation.run(() =>
               api(`orders/${o.id}/fulfillment`, "POST", {
                 expectedVersion: o.version,
                 status: next,
                 evidence,
               }),
             );
+            if (saved) onClose();
           }}
         >
           <FieldGroup>
@@ -503,48 +623,79 @@ function OrderOperations({ order: o }: { order: Order }) {
       {o.fulfillment === "delivered" && (
         <p className="page-description">运输已完成。</p>
       )}
-      <div className="business-actions">
-        <TextLink href="/admin/orders">返回工作台</TextLink>
-      </div>
-    </BusinessSection>
+    </OperationPanel>
   );
 }
-function DocumentUpload({ orderId }: { orderId: string }) {
+function DocumentUpload({
+  orderId,
+  onClose,
+  onSaved,
+  returnFocus,
+}: {
+  orderId: string;
+  onClose: () => void;
+  onSaved: () => void;
+  returnFocus: RefObject<HTMLElement | null>;
+}) {
   const operation = useOperation();
+  const formId = useId();
   return (
-    <form
-      className="business-stack"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const form = e.currentTarget,
-          data = new FormData(form);
-        data.set("orderId", orderId);
-        const result = await operation.run(() =>
-          api("attachments", "POST", data),
-        );
-        if (result) form.reset();
-      }}
+    <OperationPanel
+      kind="dialog"
+      open
+      onClose={onClose}
+      returnFocus={returnFocus}
+      busy={operation.busy}
+      title="上传订单单据"
+      description="选择单据类型并上传 PDF、PNG 或 JPEG 文件，最大 3 MB。"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={operation.busy}
+            onClick={onClose}
+          >
+            取消
+          </Button>
+          <Button form={formId} disabled={operation.busy}>
+            {operation.busy ? "上传中…" : "上传单据"}
+          </Button>
+        </>
+      }
     >
-      <FieldGroup>
-        <UiField className="form-field">
-          <FieldLabel htmlFor="document-kind">单据类型</FieldLabel>
-          <NativeSelect name="kind" id="document-kind">
-            <NativeSelectOption value="BOL">BOL 提货单</NativeSelectOption>
-            <NativeSelectOption value="POD">POD 签收单</NativeSelectOption>
-            <NativeSelectOption value="other">其他单据</NativeSelectOption>
-          </NativeSelect>
-        </UiField>
-        <Field
-          name="file"
-          label="文件（PDF / PNG / JPEG，最大 3 MB）"
-          type="file"
-          accept="application/pdf,image/png,image/jpeg"
-        />
-        <ErrorNotice message={operation.error} />
-        <Button variant="outline" disabled={operation.busy}>
-          {operation.busy ? "上传中…" : "上传单据"}
-        </Button>
-      </FieldGroup>
-    </form>
+      <form
+        id={formId}
+        className="business-stack"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const form = e.currentTarget,
+            data = new FormData(form);
+          data.set("orderId", orderId);
+          const result = await operation.run(() =>
+            api("attachments", "POST", data),
+          );
+          if (result) onSaved();
+        }}
+      >
+        <FieldGroup>
+          <UiField className="form-field">
+            <FieldLabel htmlFor="document-kind">单据类型</FieldLabel>
+            <NativeSelect name="kind" id="document-kind">
+              <NativeSelectOption value="BOL">BOL 提货单</NativeSelectOption>
+              <NativeSelectOption value="POD">POD 签收单</NativeSelectOption>
+              <NativeSelectOption value="other">其他单据</NativeSelectOption>
+            </NativeSelect>
+          </UiField>
+          <Field
+            name="file"
+            label="文件（PDF / PNG / JPEG，最大 3 MB）"
+            type="file"
+            accept="application/pdf,image/png,image/jpeg"
+          />
+          <ErrorNotice message={operation.error} />
+        </FieldGroup>
+      </form>
+    </OperationPanel>
   );
 }

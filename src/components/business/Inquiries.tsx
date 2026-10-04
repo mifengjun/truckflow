@@ -20,7 +20,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useId, useRef, useState, type RefObject } from "react";
+import { OperationPanel } from "./OperationPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   useData,
@@ -149,65 +151,123 @@ export function InquiryDetail({
   id: string;
   staff?: boolean;
 }) {
-  const q = useData<Inquiry>(`inquiries/${id}`);
+  const q = useData<Inquiry>("inquiries/" + id);
+  const [action, setAction] = useState<"quote" | "no-quote" | null>(null);
+  const [tab, setTab] = useState("shipment");
+  const [message, setMessage] = useState("");
+  const returnFocus = useRef<HTMLElement | null>(null);
   if (!q.data) return <Loading error={q.error} retry={() => q.refetch()} />;
   const i = q.data;
+  const base = staff ? "/admin" : "/portal";
   return (
     <>
       <Heading
         title={i.number}
-        description={`提交于 ${time(i.createdAt)}`}
-        action={<Status value={i.status} />}
+        description={"提交于 " + time(i.createdAt)}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            <Status value={i.status} />
+            {staff && i.status !== "ordered" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={(event) => {
+                    returnFocus.current = event.currentTarget;
+                    setAction("no-quote");
+                  }}
+                >
+                  标记暂无报价
+                </Button>
+                <Button
+                  onClick={(event) => {
+                    returnFocus.current = event.currentTarget;
+                    setMessage("");
+                    setAction("quote");
+                  }}
+                >
+                  录入报价
+                </Button>
+              </>
+            )}
+            <Button variant="outline" asChild>
+              <Link href={base + "/inquiries"}>返回询价列表</Link>
+            </Button>
+          </div>
+        }
       />
-      <div className="business-detail">
-        <div className="flex flex-col gap-6">
+      {message && (
+        <Alert role="status">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+      {i.order && (
+        <Alert>
+          <AlertDescription>
+            已生成订单{" "}
+            <TextLink href={base + "/orders/" + i.order.id}>
+              {i.order.number}
+            </TextLink>
+          </AlertDescription>
+        </Alert>
+      )}
+      {i.reason && (
+        <Alert variant="warning">
+          <AlertDescription>{i.reason}</AlertDescription>
+        </Alert>
+      )}
+      <Tabs value={tab} onValueChange={setTab} className="gap-6">
+        <TabsList aria-label="询价详情">
+          <TabsTrigger value="shipment">运输需求</TabsTrigger>
+          <TabsTrigger value="quotes">承运报价</TabsTrigger>
+        </TabsList>
+        <TabsContent value="shipment">
           <Shipment data={i.data} />
+        </TabsContent>
+        <TabsContent value="quotes">
           <BusinessSection
             title="承运方案"
-            description="价格为本次运输的客户报价。参考时效以实际运输为准。"
+            description="价格为本次运输的客户报价。下单时会再次校验有效期和可用余额。"
           >
-            <div className="flex flex-col gap-5">
-              {i.order && (
-                <Alert>
-                  <AlertDescription>
-                    已生成订单{" "}
-                    <TextLink
-                      href={`${staff ? "/admin" : "/portal"}/orders/${i.order.id}`}
-                    >
-                      {i.order.number}
-                    </TextLink>
-                  </AlertDescription>
-                </Alert>
-              )}
-              {i.reason && (
-                <Alert variant="warning">
-                  <AlertDescription>{i.reason}</AlertDescription>
-                </Alert>
-              )}
-              <QuoteOptions inquiry={i} staff={staff} />
-            </div>
+            <QuoteOptions inquiry={i} staff={staff} />
           </BusinessSection>
-        </div>
-        {staff && i.status !== "ordered" ? (
-          <QuoteForm inquiryId={id} />
-        ) : (
-          <BusinessSection title={<>询价说明</>}>
-            <p className="page-description">
-              报价为本次运输的销售金额，订单提交时系统再次校验有效期和可用余额。
-            </p>
-            <TextLink href={`${staff ? "/admin" : "/portal"}/inquiries`}>
-              返回询价列表
-            </TextLink>
-          </BusinessSection>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
+      {action === "quote" && (
+        <QuoteForm
+          inquiryId={id}
+          returnFocus={returnFocus}
+          onClose={() => setAction(null)}
+          onSaved={() => {
+            setAction(null);
+            setTab("quotes");
+            setMessage("报价已保存为草稿，请核对后发布。");
+          }}
+        />
+      )}
+      {action === "no-quote" && (
+        <NoQuoteDialog
+          inquiryId={id}
+          returnFocus={returnFocus}
+          onClose={() => setAction(null)}
+        />
+      )}
     </>
   );
 }
-function QuoteForm({ inquiryId }: { inquiryId: string }) {
+function QuoteForm({
+  inquiryId,
+  onClose,
+  onSaved,
+  returnFocus,
+}: {
+  inquiryId: string;
+  onClose: () => void;
+  onSaved: () => void;
+  returnFocus: RefObject<HTMLElement | null>;
+}) {
   const operation = useOperation(),
-    [fees, setFees] = useState([{ label: "运费", amount: "" }]),
-    [message, setMessage] = useState("");
+    [fees, setFees] = useState([{ label: "运费", amount: "" }]);
+  const formId = useId();
   const validFees = fees.every(
     (fee) => moneyInput.safeParse(fee.amount).success,
   );
@@ -216,7 +276,6 @@ function QuoteForm({ inquiryId }: { inquiryId: string }) {
     : null;
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMessage("");
     const form = e.currentTarget,
       d = Object.fromEntries(new FormData(form)),
       result = await operation.run(() =>
@@ -230,23 +289,39 @@ function QuoteForm({ inquiryId }: { inquiryId: string }) {
         }),
       );
     if (result) {
-      setMessage("报价已保存为草稿，请核对后发布。");
-      form.reset();
-      setFees([{ label: "运费", amount: "" }]);
+      onSaved();
     }
   }
   return (
-    <BusinessSection title={<>录入人工报价</>}>
-      <p className="page-description">
-        采购成本仅内部可见。费用明细和总价将在发布后展示给客户。
-      </p>
+    <OperationPanel
+      open
+      onClose={onClose}
+      returnFocus={returnFocus}
+      busy={operation.busy}
+      title="录入人工报价"
+      description="采购成本仅内部可见。费用明细和总价将在发布后展示给客户。"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={operation.busy}
+            onClick={onClose}
+          >
+            取消
+          </Button>
+          <Button
+            form={formId}
+            disabled={operation.busy || total === null || Number(total) <= 0}
+          >
+            {operation.busy && <Spinner data-icon="inline-start" />}
+            {operation.busy ? "保存中…" : "保存报价草稿"}
+          </Button>
+        </>
+      }
+    >
       <ErrorNotice message={operation.error} />
-      {message && (
-        <Alert role="status">
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      )}
-      <form onSubmit={submit} className="business-stack">
+      <form id={formId} onSubmit={submit} className="business-stack">
         <FieldGroup>
           <Field name="carrier" label="承运商 / 代理" />
           <Field
@@ -368,33 +443,69 @@ function QuoteForm({ inquiryId }: { inquiryId: string }) {
               填写承运商报价来源，方便后续核对。
             </FieldDescription>
           </UiField>
-          <Button
-            disabled={operation.busy || total === null || Number(total) <= 0}
-          >
-            {operation.busy && <Spinner data-icon="inline-start" />}
-            {operation.busy ? "保存中…" : "保存报价草稿"}
-          </Button>
         </FieldGroup>
       </form>
-      <Separator className="business-rule" />
+    </OperationPanel>
+  );
+}
+
+function NoQuoteDialog({
+  inquiryId,
+  onClose,
+  returnFocus,
+}: {
+  inquiryId: string;
+  onClose: () => void;
+  returnFocus: RefObject<HTMLElement | null>;
+}) {
+  const operation = useOperation();
+  const formId = useId();
+  return (
+    <OperationPanel
+      kind="dialog"
+      open
+      onClose={onClose}
+      returnFocus={returnFocus}
+      busy={operation.busy}
+      title="标记暂无报价"
+      description="填写客户可见的原因，说明本次需求暂时无法提供运输报价。"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={operation.busy}
+            onClick={onClose}
+          >
+            取消
+          </Button>
+          <Button form={formId} disabled={operation.busy}>
+            {operation.busy ? "提交中…" : "标记暂无报价"}
+          </Button>
+        </>
+      }
+    >
+      <ErrorNotice message={operation.error} />
       <form
-        className="business-stack"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const reason = new FormData(e.currentTarget).get("reason");
-          await operation.run(() =>
-            api(`inquiries/${inquiryId}/no-quote`, "POST", { reason }),
+        id={formId}
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const reason = new FormData(event.currentTarget).get("reason");
+          const result = await operation.run(() =>
+            api("inquiries/" + inquiryId + "/no-quote", "POST", { reason }),
           );
+          if (result) onClose();
         }}
       >
         <FieldGroup>
-          <h3>无法报价</h3>
-          <Field name="reason" label="客户可见原因" minLength={2} />
-          <Button variant="outline" disabled={operation.busy}>
-            标记暂无报价
-          </Button>
+          <Field
+            name="reason"
+            label="客户可见原因"
+            minLength={2}
+            disabled={operation.busy}
+          />
         </FieldGroup>
       </form>
-    </BusinessSection>
+    </OperationPanel>
   );
 }

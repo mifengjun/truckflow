@@ -193,6 +193,7 @@ test("shadcn 拒单确认保留必选校验和 FormData，分页按钮保留禁�
     await r.fulfill({ json: order });
   });
   await page.goto(`/admin/orders/${id}`);
+  await page.getByRole("button", { name: "处理订单", exact: true }).click();
   await page.getByLabel("承运商结果").selectOption("failed");
   await page
     .getByLabel("核实依据（内部可见）")
