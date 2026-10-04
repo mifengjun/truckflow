@@ -54,7 +54,7 @@ export function Quotes() {
         返回修改运输资料
       </Link>
       <PageHeading
-        title="选择适合这次运输的方案"
+        title="承运商报价"
         description="比较总价、服务和参考时效。所有金额均以 USD 展示。"
         action={
           <Button
@@ -134,7 +134,7 @@ export function Quotes() {
                   <div className="quote-main">
                     <div className="carrier">
                       <span className="carrier-logo">
-                        <Truck size={22} />
+                        <Truck size={24} />
                       </span>
                       <div>
                         <h2>{quote.carrier}</h2>

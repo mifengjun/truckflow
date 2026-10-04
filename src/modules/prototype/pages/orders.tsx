@@ -8,6 +8,10 @@ import {
   ChevronLeft,
   ChevronRight,
   SlidersHorizontal,
+  ClipboardCheck,
+  CircleHelp,
+  TriangleAlert,
+  ArrowRight,
 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { usePrototype } from "../provider";
@@ -162,7 +166,7 @@ export function Orders({ admin = false }: { admin?: boolean }) {
         title={admin ? "订单工作台" : "我的订单"}
         description={
           admin
-            ? "集中处理待审核、待确认与异常订单，让每一程进度清晰。"
+            ? "核对订单资料、提交承运商并跟进接单结果。"
             : "从下单到签收，随时掌握每一笔运输。"
         }
         action={
@@ -177,21 +181,50 @@ export function Orders({ admin = false }: { admin?: boolean }) {
         }
       />
       {admin && (
-        <div className="work-reminder">
-          <span className="status-dot" />
-          <strong>
-            {
-              state.orders.filter(
-                (o) =>
-                  o.result === "pending" ||
-                  o.result === "uncertain" ||
-                  o.result === "failed",
-              ).length
-            }{" "}
-            笔订单需要处理
-          </strong>
-          <span>优先核实结果待确认的订单，避免重复提交承运商。</span>
-        </div>
+        <section className="operations-desk" aria-label="订单处理队列">
+          <div className="desk-intro">
+            <span className="desk-symbol">
+              <ClipboardCheck size={24} />
+            </span>
+            <div>
+              <h2>待办队列</h2>
+              <p>先核实接单结果，再安排下一程。</p>
+            </div>
+          </div>
+          <div className="desk-queues">
+            {(
+              [
+                [
+                  "uncertain",
+                  "结果待确认",
+                  "优先核实，避免重复提交",
+                  CircleHelp,
+                ],
+                ["pending", "待审核", "核对运输资料后提交", ClipboardCheck],
+                ["failed", "提交异常", "检查资料并重新处理", TriangleAlert],
+              ] as const
+            ).map(([key, label, hint, Icon]) => (
+              <button
+                key={key}
+                className={`queue-action queue-${key}`}
+                aria-pressed={status === key}
+                onClick={() => filter("status", key)}
+              >
+                <Icon size={19} />
+                <span>
+                  <strong>{label}</strong>
+                  <small>{hint}</small>
+                </span>
+                <b>
+                  {scenario === "empty"
+                    ? 0
+                    : state.orders.filter((o) => o.result === key).length}
+                </b>
+                <ArrowRight size={16} />
+              </button>
+            ))}
+          </div>
+        </section>
       )}
       <section className="panel orders-panel">
         <div className="filter-tabs" aria-label="订单状态筛选">

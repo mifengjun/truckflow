@@ -2,11 +2,11 @@
 name: Truckflow
 description: 中文卡派业务操作界面；清晰的表单、表格与可追溯状态。
 colors:
-  primary: "#2454c6"
-  primary-hover: "#1d45a7"
+  primary: "#2856a3"
+  primary-hover: "#1c407e"
   primary-soft: "#edf2ff"
-  background: "#f5f7fa"
-  foreground: "#182230"
+  background: "#f5f6f7"
+  foreground: "#243342"
   muted: "#526071"
   line: "#dfe4ec"
   surface: "#fff"
@@ -22,6 +22,20 @@ colors:
   warning-soft: "#fff4de"
   error: "#b42318"
   error-soft: "#fff0ed"
+  navigation: "#1b2a3a"
+  navigation-text: "#bcc9d8"
+  navigation-secondary: "#afbed0"
+  navigation-hover: "#2a3d51"
+  navigation-active: "#344b65"
+  document-line: "#d6dde5"
+  section-line: "#dfe4e9"
+  queue-selected: "#e7edf5"
+  table-heading: "#eef1f4"
+  table-heading-text: "#4a5b6e"
+  table-hover: "#f3f6fa"
+  control-hover: "#8d9db1"
+  placeholder: "#647186"
+  badge-blue: "#2454c6"
 typography:
   headline:
     fontFamily: 'Arial, "PingFang SC", "Microsoft YaHei", sans-serif'
@@ -56,13 +70,14 @@ typography:
     lineHeight: 1.6
   amount:
     fontFamily: 'Arial, "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "23px"
-    fontWeight: 700
+    fontSize: "26px"
+    fontWeight: 600
+    letterSpacing: "-0.5px"
     lineHeight: 1.6
 rounded:
   badge: "4px"
-  control: "6px"
-  panel: "8px"
+  control: "4px"
+  panel: "5px"
   dialog: "12px"
 spacing:
   space-4: "4px"
@@ -120,139 +135,163 @@ components:
     rounded: "{rounded.badge}"
     padding: "3px 8px"
   nav-active:
-    backgroundColor: "{colors.primary-soft}"
-    textColor: "{colors.primary}"
+    backgroundColor: "{colors.navigation-active}"
+    textColor: "{colors.surface}"
     rounded: "{rounded.control}"
-    height: "44px"
+    height: "42px"
     padding: "0 12px"
+  queue-action:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    padding: "8px 20px"
+  queue-action-selected:
+    backgroundColor: "{colors.queue-selected}"
+  quote-row:
+    backgroundColor: "{colors.surface}"
+    rounded: "0px"
+    padding: "24px"
 ---
 
 # Design System: Truckflow
 
 ## Overview
 
-**Creative North Star: "操作型物流工作台"**
+**Creative North Star: "物流业务工作台"**
 
-以已确认的操作型浅色界面为方向：让地址阅读、费用比较、状态判断和待办处理成为首要任务。白色内容区置于浅灰工作区，单一蓝色承担操作和选择，细边线组织密集信息。
+以真实物流业务工具为准：深海军蓝导航稳定页面骨架，浅中性工作区承载订单与单据，克制的蓝色用于操作。连续表单、对齐报价行和横向待办队列把用户注意力留给对象、状态和下一步。
 
-客户门户与管理后台共享字体、导航、字段和状态语言。原型使用系统中文字体和线性 SVG 图标；无渐变、无产品栅格插画。此文记录当前实现，依据 src/app/globals.css、共享组件及已批准设计稿；不是尚未落地的组件库承诺。
+视觉升级遵循已确认的纠正方向：不使用膨胀的任务卡、营销式标题或重复圆角面板。客户和运营共享系统中文字体、细边线与状态语义；数值来自原型记录，业务内容比装饰优先。记录依据最终 CSS 层叠和现有组件，视觉方向见 .impeccable/surfaces/visual-upgrade.md。
 
 **Key Characteristics:**
 
-- 浅灰工作区、白色面板、单一操作蓝。
-- 紧凑表格与分组表单，完整地址可换行。
-- 状态同时有文字与色彩，金额使用等宽数字。
-- 桌面双栏工作区，移动端单列与订单摘要。
+- 深色导航与中性工作区形成稳定骨架。
+- 连续单据式表单、连续报价行、紧凑横向待办条。
+- 常用控件 4px、通用面板 5px 圆角；用边线组织内容。
+- 金额等宽数字、完整地址换行、状态保留文字。
 
 ## Colors
 
-低饱和浅灰承载信息，清晰的操作蓝与语义状态色承担重点。上方 frontmatter 是复用色值的规范；CSS 自定义属性的直接映射为 primary、background、foreground、muted、line 和 surface，其余为已实现样式中的重复值。
+深海军蓝与灰白是界面骨架，操作蓝保持克制。frontmatter 为已使用复用值；primary、primary-hover、navigation、background、foreground、muted、line、surface 直接对应 CSS 自定义属性，其余提取自生效选择器。
 
 ### Primary
 
-- **操作蓝 / primary**：主按钮、文本链接、当前导航与完成的运输步骤。
+- **操作蓝 / primary**：主要按钮、链接、运输进度和选中控件。
 - **深操作蓝 / primary-hover**：主按钮悬停。
-- **浅蓝选中底 / primary-soft**：当前导航、蓝色徽标、提示和完成步骤。
-- **焦点蓝 / focus**：交互元素的可见键盘焦点。
+- **浅蓝 / primary-soft**：提示、完成步骤和蓝色徽标底色。它不是当前侧栏底色。
+- **焦点蓝 / focus**：可见键盘焦点。
 
 ### Neutral
 
-- **工作区灰 / background** 与 **内容白 / surface**：区分工作区和内容。
-- **正文墨 / foreground** 与 **辅助灰 / muted**：正文和次级信息。
-- **分隔灰 / line**：面板、栏与列表分隔；control-border、outline-border 专用于控件。
-- **中性状态底 / neutral-soft**：普通履约状态。
+- **导航海军蓝 / navigation**：整个侧栏；navigation-text 和 navigation-secondary 为其普通文字与辅助信息。
+- **导航悬停 / navigation-hover**、**导航当前项 / navigation-active**：深底上以白字保持清楚的选中关系。
+- **工作区灰 / background**、**内容白 / surface**：未框住的路线与摘要、连续白色表单与表格。
+- **正文墨 / foreground**、**辅助灰 / muted**：业务内容层级。
+- **line、document-line、section-line**：通用边线、文档外框和内部段落分隔。
+- **table-heading、table-heading-text、table-hover**：紧凑表格的表头和行交互。
+- **queue-selected**：待办按钮的悬停与按下状态。
 
-成功绿、待处理琥珀、错误红及其浅底组成语义状态对，不是额外品牌强调色。现有 notice 提示使用同色系的独立浅底与描边；徽标和提示不应混为同一具体样式。
+成功绿、琥珀等待色、错误红与相应浅底专用于状态。现有蓝色徽标仍使用独立 badge-blue，不能把它误记为主操作蓝；notice 使用各自已有的浅底与边线。
 
-**The Action Blue Rule.** 蓝色用于可操作内容、当前选择和流程进度；状态色保留其业务含义。
+**The Operational Color Rule.** 深色导航承载定位，操作蓝承载行动；业务状态使用独立语义色和文字。
 
 ## Typography
 
-全站使用 frontmatter 中同一系统字体栈，英文优先 Arial，中文回退至 PingFang SC / Microsoft YaHei；不依赖在线字体。字体不是装饰，页面标题直接说明任务。
+所有角色采用系统字体栈：Arial，中文回退至 PingFang SC / Microsoft YaHei。不依赖在线字体。页面标题直接命名业务任务，不添加装饰眉题或营销语。
 
-- **Headline**：页面 h1；移动端缩为 22px。登录页是独立例外（30px / 1.65，1100px 以下 25px）。
-- **Title**：面板 h2；h3 使用 14px / 600。
-- **Body**：基础正文及常规输入。
-- **Description**：页面说明、按钮附近说明和提示文字。
-- **Label**：字段标签、徽标；常规辅助文案同字号但使用 400 字重。表格也是 12px，属于密集操作数据。
-- **Amount**：报价总额，tabular-nums；摘要金额为 27px，表格金额为 13px / 550。
+- **Headline**：24px / 650，移动端 22px。登录页独立标题 30px / 1.65，在 1100px 以下为 25px。
+- **Title**：通用 h2 与承运商名称 16px / 650；带分隔线的面板标题为 15px / 650，摘要标题 14px。
+- **Body / Description / Label**：14px 正文与输入、13px 说明与按钮、12px 字段标签和辅助文字。表格数据为 12px。
+- **Amount**：报价金额 26px / 600，负字距与等宽数字；摘要金额 27px，表格金额 14px / 550。
+- **Queue count**：桌面 20px / 600，移动端 16px；表示已有订单计数。
 
-**The Legible Detail Rule.** 辅助文案采用至少 12px；金额与数量使用等宽数字，完整地址允许换行。
+**The Legible Detail Rule.** 辅助文字至少 12px，金额和数量采用等宽数字，完整地址允许换行。
 
 ## Layout
 
-桌面为固定侧栏加弹性工作区：侧栏宽 224px，顶栏高 62px；内容最大宽 1560px，内边距 30px 32px 48px。页面标题与操作并排，下面为说明与业务区。面板通常 24px 内边距，连续面板相隔 20px。间距按紧凑控件、字段组、业务区块分级，frontmatter 记录重复使用的实际值，并非单一严格倍数网格。
+桌面侧栏宽 208px，顶栏高 52px。内容最大宽 1560px，工作区内边距 28px 32px 40px。标题行下留 22px，订单待办条与表格紧接排列。待办条上下边线之间采用 12px 纵向留白，按钮由竖线分隔，不包成独立彩色卡片。
 
-询价使用 `minmax(0, 1fr) 280px` 双栏与 24px 间隔，摘要在桌面距顶部 24px 粘性定位；字段两列、20px 间隔。订单详情使用主体与 300px 操作栏。
+询价主表单与摘要为 `minmax(0, 1fr) 280px`，间隔 24px；字段两列，间隔 20px。主表单是一个外框，内部小节 24px 内边距，彼此零间隙且用横线分隔。桌面摘要透明无框，仅左侧分隔线，内边距 4px 0 16px 22px，并距顶 24px 粘性定位。详情仍为主体加 300px 操作栏。
 
-| 最大视口宽度 | 已实现适配                                                                                                           |
-| ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| 1200px       | 表格单元左右内边距减小，表格最小宽 790px 并可横向滚动；详情操作栏 260px。                                            |
-| 1100px       | 侧栏 196px、工作区内边距 26px 24px；询价摘要 240px、栏间距 20px；报价布局压缩。                                      |
-| 900px        | 询价和详情主体变单列；详情辅助面板暂为两列；摘要取消粘性；工具栏换行。                                               |
-| 760px        | 侧栏通过菜单展开；工作区 22px 16px 32px，面板 18px；字段、地址、辅助面板单列；订单表格改为摘要列表；运输摘要可折叠。 |
+报价路线无卡片底色，仅上下边线。所有承运商报价收进一个 4px 圆角外框，行与行零间隙；主行内边距 24px。桌面以承运商、参考时效、右对齐价格、操作四列比较。
 
-常规按钮和输入桌面最小高 40px，移动端 44px。小按钮、分页和评审工具有独立尺寸，不能声称所有目标均达到 44px。移动端订单摘要保留订单、路线、费用与状态；其余表格仍可在容器内滚动。
+| 最大视口宽度 | 当前生效行为                                                                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1200px       | 表格横向内边距压缩，最小宽 790px 并允许容器滚动；详情操作栏 260px。                                                                            |
+| 1100px       | 侧栏 190px，工作区内边距 24px；询价摘要 240px；待办标题和辅助说明隐藏；报价三列，按钮在第三列。                                                |
+| 900px        | 询价及详情主体单列，摘要不粘性；详情辅助区暂为两列；工具栏可换行。                                                                             |
+| 760px        | 深色侧栏通过菜单展开、宽 230px；工作区 24px 16px；订单改摘要列表；待办条保留横向紧凑排列，隐藏图标，数字缩小；报价两列且按钮跨两列；询价单列。 |
+
+移动端通用面板内边距 18px，询价内部小节 20px 18px；摘要恢复细外框与 4px 圆角，并可折叠。普通按钮和输入最小高由 40px 变 44px；分页、小按钮、评审工具保留各自尺寸。52px 顶栏高度由最终全局规则覆盖早先移动规则。
 
 ## Elevation & Depth
 
-工作区总体扁平，白底和细描边形成层次。主按钮与面板没有投影，也没有缩放悬停。模态对话框以遮罩和柔和阴影突出；评审角色开关有微小阴影。
+业务表格、待办队列、表单和报价均以色面与边线分层，不使用浮起的卡片阴影。模态遮罩和对话框保留功能性深度。
 
-- **Dialog**：`0 20px 90px #15213630`，背景遮罩 `#15213660`。
-- **Review selection**：`0 1px 3px #34486612`，只用于评审工具的当前角色。
+- **Dialog**：`0 20px 90px #15213630`；遮罩 `#15213660`。
+- **Review selection**：`0 1px 3px #34486612`；只属于评审角色选中项。
 
-**The Flat Workspace Rule.** 业务面板以边线与底色分层；阴影仅见于对话框和评审工具的选中角色。
+**The Document Surface Rule.** 连续业务资料通过边线分组，报价通过连续行比较，避免重复卡片制造层级。
 
-没有通用过渡时长或 easing token；当前状态直接切换。减少动态效果媒体查询关闭动画与过渡，并使用自动滚动行为。
+导航背景和文字、按钮背景和边线、输入边线使用 140ms 过渡；CSS 未指定 easing，使用默认 ease。无缩放或位移动效。prefers-reduced-motion 关闭过渡及动画。未使用的 elevation 自定义属性不是已落地的投影规范。
 
 ## Shapes
 
-面板使用轻圆角（panel），按钮、输入、提示和导航使用更紧的圆角（control），徽标采用 badge 圆角，对话框采用 dialog 圆角。边线一般为 1px。圆形仅承担头像、步骤编号、状态点和起点标记等含义；终点使用方形标记帮助区分。
+常用按钮、输入、导航、头像和文档外框为 4px 圆角，通用面板为 5px。询价内部小节、报价内部行、桌面路线与摘要无圆角。步骤编号为 3px 小方角；状态点、起点标记、运输进度节点仍为圆形。对话框保留 12px 圆角。
+
+现有提示和服务选项仍为 6px；页面索引导览与资金汇总保留 8px，这是局部存量组件，不应扩散为新业务页的默认容器规范。边线通常为 1px。
 
 ## Components
 
 ### Buttons
 
-共享 Button 的 default、outline、ghost、destructive 对应主蓝、白底描边、蓝字透明底、错误红实底。默认尺寸见 frontmatter；sm 为最小高 32px、4px 10px 内边距、12px 字号。主按钮和描边按钮各有背景悬停值；ghost 和 destructive 当前没有专门悬停或按下变化。禁用按钮为半透明（opacity 0.5）与 not-allowed 光标。
+Button 的 default、outline、ghost、destructive 分别对应操作蓝实底、白底描边、透明底蓝字、错误红实底。default 与 outline 有背景悬停变化；后两者没有专门按下或悬停背景。小尺寸为 32px 最小高、4px 10px 内边距、12px 字号。禁用按钮 opacity 0.5，并显示 not-allowed 光标。
 
-所有主要交互元素使用 3px 焦点蓝 outline，向外偏移 3px。保留图标加文字形式；图标来自线性 SVG。
+主要交互元素采用 3px 焦点蓝 outline，偏移 3px。图标使用线性 SVG，功能仍由文字说明。
 
 ### Chips
 
-Badge 提供 neutral、success、warning、error、blue；每个包含 5px 同色点和可读状态文字，不是可点击筛选器。下单结果与履约状态分别显示。筛选标签是另一种真实按钮模式，以下边线和文字表示选中。
+Badge 是非交互状态标记，4px 圆角、3px 8px 内边距，包含 5px 色点及文字。neutral、success、warning、error、blue 均使用现有业务映射，下单结果与履约状态分别呈现。列表筛选标签是独立按钮模式，以底线表达选中。
 
 ### Cards / Containers
 
-Panel 是白底、细边线的基础容器。面板标题通常与辅助操作同排，下留 20px。表格容器不重复增加内部留白，单元格提供密度。桌面表格有浅灰表头、水平分隔线、轻微悬停底色；金额等宽、路线完整换行。
+Panel 保留白底、通用边线和 5px 圆角供独立信息块使用。面板标题区下内边距 14px、细底线、下外边距 20px。询价通过更具体的选择器覆盖为连续无框小节；报价覆盖为连续行，不能照搬通用面板间距。订单表外框 4px，无阴影；表头加重至 600，行纵向内边距 16px，悬停使用 table-hover。
 
 ### Inputs / Fields
 
-输入、select 和 textarea 使用白底、control-border 描边与 control 圆角。文本框可纵向调整且最小高 80px。FormField 生成关联的 label、提示和错误描述；aria-invalid 对应错误红描边，文字说明在字段下方。未实现独立的输入禁用视觉规范，不从按钮禁用样式推断。
+白底、4px 圆角、control-border 描边，悬停描边转为 control-hover。占位文案为 placeholder，输入光标用操作蓝。textarea 可纵向调整且最小高 80px。FormField 关联 label、提示及错误；aria-invalid 触发红边，字段下方同时显示错误文字。禁用输入没有独立视觉规范，不从按钮样式推断。
 
 ### Navigation
 
-侧栏链接高 44px，文字与线性图标同列；当前项浅蓝底、蓝字、600 字重，普通项辅助灰，悬停工作区灰。窄屏通过菜单展开白色侧栏与遮罩。上方评审工具有独立淡蓝底，与业务菜单清楚区分。
+深色侧栏链接高 42px，普通文字为 navigation-text，悬停 navigation-hover 底配白字；当前项 navigation-active 底配白字、600 字重。导航项间隔 3px。标志为无色块的线性图标，头像为小方角。移动端展开同一深色导航与遮罩。顶部评审工具为中性浅灰，作为原型辅助层独立存在。
+
+### Operations queue strip
+
+后台待办条包含“结果待确认”“待审核”“提交异常”，数字直接统计已有记录。每个按钮桌面 8px 20px 内边距，左侧竖线分隔；悬停和 aria-pressed 使用 queue-selected。选择后筛选订单列表；键盘焦点沿用全局 outline。移动端保留横排，隐藏装饰性图标与说明，以短标签加数字完成判断。
+
+### Quote comparison rows
+
+承运商名称直接起行，不展示图标色块。价格与操作形成末端对齐组，金额清楚显示币种。费用 details 在行内展开，默认浅底，打开后底色稍深；过期报价显示禁用操作和错误说明。没有最低价推荐标记。移动端各字段重新排布，操作占整行。
 
 ### Shipment summary and progress
 
-运输摘要复用起点圆形与终点方形标记，地址支持换行。事实用左右对齐的定义列表显示，金额单独以分隔线和较大数字突出。桌面摘要粘性定位，移动端使用带 aria-expanded 的展开按钮。步骤编号与运输进度用线连接，以填充蓝与文字共同表示进度；窄屏询价步骤取消连接线并允许换行。
+起点圆、终点方，地址完整换行；事实列表左右对齐。摘要桌面为旁注式透明栏，移动端为可折叠边框区。询价步骤是透明底的底线栏，小方角编号，当前编号浅蓝底深蓝字；运输履约进度仍使用圆节点和连接线，不能将两者当成同一视觉组件。
 
 ### Dialogs and feedback
 
-Radix Dialog 提供标题、说明、关闭按钮及焦点管理；宽度 `min(520px, calc(100vw - 32px))`，最大高 85dvh 并可滚动。空状态居中显示线性图标、标题、说明与恢复操作。加载状态使用静态浅灰占位条。错误、成功、等待提示保留可读说明，不用纯色块代替业务结果。
+Radix Dialog 保留焦点管理、标题和关闭操作；宽 `min(520px, calc(100vw - 32px))`，最大高 85dvh，内部可滚动。空状态给出说明与恢复操作，加载使用静态占位条；成功、等待、失败均用业务文字说明，不以颜色替代含义。
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** 使用主蓝表达主要操作、链接和当前选择。
-- **Do** 保留明确标题、可见字段标签、错误说明及键盘焦点。
+- **Do** 使用深色导航、克制的操作蓝和中性业务内容区。
+- **Do** 用连续表单、对齐数据行和细分隔线组织复杂任务。
+- **Do** 让待办条筛选已有订单，保留按下状态和可见键盘焦点。
 - **Do** 显示币种、单位、时区和状态文字；金额采用 tabular-nums。
-- **Do** 沿用现有断点与真实组件状态，保持长地址可读。
 
 ### Don’t:
 
-- **Don’t** 添加渐变、装饰性插画或多种竞争的主操作色。
-- **Don’t** 仅靠颜色表达订单状态或输入错误。
-- **Don’t** 将标题上方装饰眉题作为页面模式。
-- **Don’t** 将报价低价视觉包装成推荐承运商。
+- **Don’t** 使用膨胀任务卡、营销式标题、重复圆角面板或装饰性图标色块。
+- **Don’t** 添加渐变、装饰地图或虚构指标来填充业务页面。
+- **Don’t** 仅靠颜色表达状态或错误，或添加标题眉题。
+- **Don’t** 将最低报价视觉包装成承运商推荐。

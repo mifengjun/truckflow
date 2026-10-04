@@ -106,7 +106,7 @@ export function Confirm() {
         返回报价比较
       </Link>
       <PageHeading
-        title="最后一步，核对运输信息"
+        title="确认运输订单"
         description="订单将使用以下资料与报价快照，提交后交由运营审核。"
       />
       <div className="split-layout">

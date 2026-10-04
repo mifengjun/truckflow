@@ -63,7 +63,7 @@ export function Inquiry() {
   return (
     <>
       <PageHeading
-        title="为下一程，找到合适运力"
+        title="新建运输询价"
         description="填写运输信息，比较承运商报价，再确认下单。"
         action={
           <Button
@@ -114,7 +114,6 @@ export function Inquiry() {
                     <MapPin size={17} />
                     提货信息
                   </h2>
-                  <span className="section-number">01</span>
                 </div>
                 <div className="form-grid">
                   <FormField
@@ -163,7 +162,6 @@ export function Inquiry() {
                     <MapPin size={17} />
                     收货信息
                   </h2>
-                  <span className="section-number">02</span>
                 </div>
                 <div className="form-grid">
                   <FormField
