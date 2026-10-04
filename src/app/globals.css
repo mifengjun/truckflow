@@ -2906,9 +2906,86 @@ select.field:hover {
 /* Formal business pages share the approved prototype's visual language. */
 .production-app {
   min-height: 100dvh;
+  color: var(--foreground);
+  background: var(--background);
+
+  /* shadcn/ui New York defaults, scoped to the live business workspaces. */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --line: var(--border);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --surface: var(--card);
+  --primary-hover: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  font-family: ui-sans-serif, system-ui, sans-serif;
 }
 .production-app .sidebar {
   top: 0;
+}
+.production-app .eyebrow {
+  display: none;
+}
+.production-app .page-heading {
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+.production-app .page-description {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+.production-app [data-slot="field-label"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+}
+.production-app .field-hint {
+  font-size: 0.875rem;
+}
+.production-app .field-error,
+.production-app .form-field label > span {
+  color: var(--destructive);
+}
+.production-app [aria-invalid="true"] {
+  border-color: var(--destructive);
+}
+.production-app .panel {
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+.production-app :is(button, a, select, input, textarea, summary):focus-visible {
+  outline-color: var(--ring);
 }
 .business-auth {
   max-width: 460px;
