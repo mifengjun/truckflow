@@ -1,12 +1,22 @@
+import { BusinessSection } from "./shared";
+import { FieldGroup } from "@/components/ui/field";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table as UiTable,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
 import type { InquiryInput } from "@/modules/business/contracts";
 export function Shipment({ data }: { data: InquiryInput }) {
   return (
-    <section className="panel">
+    <BusinessSection title={<>运输信息</>}>
       <div className="panel-header">
-        <h2>运输信息</h2>
         <span>{data.pickupDate} · LTL</span>
       </div>
-      <div className="form-grid">
+      <FieldGroup className="form-grid">
         {(["origin", "destination"] as const).map((side, i) => (
           <div key={side} className="business-address">
             <h3>{i === 0 ? "提货地址" : "收货地址"}</h3>
@@ -24,31 +34,31 @@ export function Shipment({ data }: { data: InquiryInput }) {
             </small>
           </div>
         ))}
-      </div>
-      <hr className="business-rule" />
+      </FieldGroup>
+      <Separator className="business-rule" />
       <div className="table-scroll">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>货物</th>
-              <th>件数</th>
-              <th>单件重量 lb</th>
-              <th>单件尺寸 in</th>
-            </tr>
-          </thead>
-          <tbody>
+        <UiTable className="data-table">
+          <TableHeader>
+            <TableRow>
+              <TableHead>货物</TableHead>
+              <TableHead>件数</TableHead>
+              <TableHead>单件重量 lb</TableHead>
+              <TableHead>单件尺寸 in</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.goods.map((g, i) => (
-              <tr key={i}>
-                <td>{g.name}</td>
-                <td>{g.quantity}</td>
-                <td>{g.weight}</td>
-                <td>
+              <TableRow key={i}>
+                <TableCell>{g.name}</TableCell>
+                <TableCell>{g.quantity}</TableCell>
+                <TableCell>{g.weight}</TableCell>
+                <TableCell>
                   {g.length} × {g.width} × {g.height}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </UiTable>
       </div>
       <p className="page-description">
         附加服务：
@@ -63,6 +73,6 @@ export function Shipment({ data }: { data: InquiryInput }) {
       </p>
       {data.reference && <p>客户参考号：{data.reference}</p>}
       {data.notes && <p className="business-address">备注：{data.notes}</p>}
-    </section>
+    </BusinessSection>
   );
 }

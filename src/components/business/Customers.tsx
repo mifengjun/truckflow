@@ -1,4 +1,17 @@
 "use client";
+import { BusinessSection } from "./shared";
+import { ConfirmAction } from "./ConfirmAction";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableRow, TableCell } from "@/components/ui/table";
+import {
+  FieldSet,
+  FieldLegend,
+  FieldLabel,
+  FieldGroup,
+} from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +36,7 @@ export function CustomersPage() {
     <>
       <Heading
         title="客户与账号"
-        description="先建立客户公司和资金账户，再邀请客户使用独立账号。"
+        description="管理自主注册客户，也可建立客户公司并邀请同事账号。"
         action={
           <Button
             onClick={() => {
@@ -37,28 +50,47 @@ export function CustomersPage() {
       />
       <ErrorNotice message={statusOperation.error} />
       <div className="business-detail">
-        <section className="panel">
+        <BusinessSection title={<>客户资料</>}>
           {!q.data ? (
             <Loading error={q.error} retry={() => q.refetch()} />
           ) : (
             <>
               <Table head={["公司", "联系人", "邮箱 / 电话", "状态", "账号"]}>
                 {q.data.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.name}</td>
-                    <td>{c.contact}</td>
-                    <td>
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      {c.name}
+                      <div className="mt-2">
+                        <Badge variant="secondary">
+                          {c.source === "self_signup"
+                            ? "自主注册"
+                            : "管理员建立"}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>{c.contact}</TableCell>
+                    <TableCell>
                       {c.email}
                       <br />
                       {c.phone}
-                    </td>
-                    <td>
+                    </TableCell>
+                    <TableCell>
                       <Status value={c.status} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={statusOperation.busy}
-                        onClick={() =>
+                      <ConfirmAction
+                        label={
+                          c.status === "active" ? "冻结新业务" : "恢复新业务"
+                        }
+                        title={
+                          c.status === "active"
+                            ? "冻结客户的新业务？"
+                            : "恢复客户的新业务？"
+                        }
+                        description={`${c.name}：${c.status === "active" ? "冻结后不能提交新的询价与订单，已有记录仍保留。" : "恢复后可以继续提交询价与订单。"}`}
+                        confirmLabel={
+                          c.status === "active" ? "确认冻结" : "确认恢复"
+                        }
+                        busy={statusOperation.busy}
+                        onConfirm={() =>
                           statusOperation.run(() =>
                             api(`customers/${c.id}`, "PATCH", {
                               status:
@@ -66,11 +98,9 @@ export function CustomersPage() {
                             }),
                           )
                         }
-                      >
-                        {c.status === "active" ? "冻结新业务" : "恢复新业务"}
-                      </Button>
-                    </td>
-                    <td>
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
@@ -81,14 +111,14 @@ export function CustomersPage() {
                       >
                         管理邀请
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </Table>
               {!q.data.length && <Empty text="暂无客户公司" />}
             </>
           )}
-        </section>
+        </BusinessSection>
         {creating ? (
           <CustomerCreate
             onDone={(c) => {
@@ -99,12 +129,11 @@ export function CustomersPage() {
         ) : selected ? (
           <Invitations key={selected.id} customer={selected} />
         ) : (
-          <section className="panel">
-            <h2>客户管理</h2>
+          <BusinessSection title={<>客户管理</>}>
             <p className="page-description">
               客户公司之间数据隔离。每个账号分别授予业务或财务权限。
             </p>
-          </section>
+          </BusinessSection>
         )}
       </div>
     </>
@@ -113,8 +142,7 @@ export function CustomersPage() {
 function CustomerCreate({ onDone }: { onDone: (c: Customer) => void }) {
   const operation = useOperation();
   return (
-    <section className="panel">
-      <h2>新建客户公司</h2>
+    <BusinessSection title={<>新建客户公司</>}>
       <ErrorNotice message={operation.error} />
       <form
         className="business-stack"
@@ -130,15 +158,17 @@ function CustomerCreate({ onDone }: { onDone: (c: Customer) => void }) {
           if (result) onDone(result);
         }}
       >
-        <Field name="name" label="公司名称" />
-        <Field name="contact" label="主要联系人" />
-        <Field name="email" label="联系邮箱" type="email" />
-        <Field name="phone" label="联系电话" />
-        <Button disabled={operation.busy}>
-          {operation.busy ? "创建中…" : "创建公司及资金账户"}
-        </Button>
+        <FieldGroup>
+          <Field name="name" label="公司名称" />
+          <Field name="contact" label="主要联系人" />
+          <Field name="email" label="联系邮箱" type="email" />
+          <Field name="phone" label="联系电话" />
+          <Button disabled={operation.busy}>
+            {operation.busy ? "创建中…" : "创建公司及资金账户"}
+          </Button>
+        </FieldGroup>
       </form>
-    </section>
+    </BusinessSection>
   );
 }
 function Invitations({ customer: c }: { customer: Customer }) {
@@ -148,16 +178,15 @@ function Invitations({ customer: c }: { customer: Customer }) {
     operation = useOperation(),
     [message, setMessage] = useState("");
   return (
-    <section className="panel">
-      <h2>{c.name} · 邀请账号</h2>
+    <BusinessSection title={<>{c.name} · 邀请账号</>}>
       <p className="page-description">
         邀请邮件发送后，客户通过链接设置自己的密码。填写已邀请邮箱可重新发送密码设置邮件。
       </p>
       <ErrorNotice message={operation.error} />
       {message && (
-        <div className="notice" role="status">
-          {message}
-        </div>
+        <Alert role="status">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
       <form
         className="business-stack"
@@ -178,34 +207,44 @@ function Invitations({ customer: c }: { customer: Customer }) {
           }
         }}
       >
-        <Field name="name" label="账号姓名" />
-        <Field name="email" label="登录邮箱" type="email" />
-        <fieldset>
-          <legend>账号权限（至少选择一项）</legend>
-          <label className="business-check">
-            <input
-              type="checkbox"
-              name="roles"
-              value="customer_operator"
-              defaultChecked
-            />
-            业务：询价、下单、查看订单
-          </label>
-          <label className="business-check">
-            <input
-              type="checkbox"
-              name="roles"
-              value="customer_finance"
-              defaultChecked
-            />
-            财务：充值、余额、流水
-          </label>
-        </fieldset>
-        <Button disabled={operation.busy || c.status !== "active"}>
-          {operation.busy ? "发送中…" : "发送邀请邮件"}
-        </Button>
+        <FieldGroup>
+          <Field name="name" label="账号姓名" />
+          <Field name="email" label="登录邮箱" type="email" />
+          <FieldSet>
+            <FieldLegend>账号权限（至少选择一项）</FieldLegend>
+            <FieldLabel
+              htmlFor="role-customer_operator"
+              className="business-check"
+            >
+              <Checkbox
+                id="role-customer_operator"
+
+                name="roles"
+                value="customer_operator"
+                defaultChecked
+              />
+              业务：询价、下单、查看订单
+            </FieldLabel>
+            <FieldLabel
+              htmlFor="role-customer_finance"
+              className="business-check"
+            >
+              <Checkbox
+                id="role-customer_finance"
+
+                name="roles"
+                value="customer_finance"
+                defaultChecked
+              />
+              财务：充值、余额、流水
+            </FieldLabel>
+          </FieldSet>
+          <Button disabled={operation.busy || c.status !== "active"}>
+            {operation.busy ? "发送中…" : "发送邀请邮件"}
+          </Button>
+        </FieldGroup>
       </form>
-      <hr className="business-rule" />
+      <Separator className="business-rule" />
       <h3>邀请记录</h3>
       {q.data ? (
         q.data.map((i) => (
@@ -216,6 +255,6 @@ function Invitations({ customer: c }: { customer: Customer }) {
       ) : (
         <Loading error={q.error} retry={() => q.refetch()} />
       )}
-    </section>
+    </BusinessSection>
   );
 }

@@ -5,7 +5,8 @@ import { FlaskConical, RotateCcw, ListTree } from "lucide-react";
 import { usePrototype } from "@/modules/prototype/provider";
 import type { Scenario } from "@/modules/prototype/mock-adapter";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose } from "@/components/ui/dialog";
+import { DialogClose } from "@/components/ui/dialog";
+import { PreviewDialog as Dialog } from "./PreviewDialog";
 export function ReviewToolbar() {
   const { scenario, setScenario, reset } = usePrototype();
   const path = usePathname();

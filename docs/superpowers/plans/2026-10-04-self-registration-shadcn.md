@@ -129,3 +129,11 @@
 ## Execution Handoff
 
 用户已要求按设计稿继续；设计视为已审阅，计划等待审阅。沿用当前会话顺序实现，不新建用户任务。计划确认后使用 executing-plans 逐项执行；缺少邮件服务不阻断代码和受控验收，但阻断外部自主注册的真实投递验收。
+
+## 执行结果（2026-10-04）
+
+Task 1–5 的功能实现已完成；Task 6 的代码验收与 staging 发布已完成，真实邮件投递保留为未完成。历史步骤复选框保留执行细节，不将未单独观察到红灯的测试或未配置的 SMTP 标记为完成。
+
+已验证：单元 23 项、数据库与 HTTP 集成 29 项、正式及原型浏览器 11 项，lint/typecheck/build、git diff --check。最终独立审查发现开户前密码重设受 Actor 限制，新增测试先得到 403，再修复并通过全量集成。部署与剩余事项见 `../specs/2026-10-04-self-registration-acceptance.md`。
+
+执行裁决：邮件服务缺失时保持 `REGISTRATION_ENABLED=false`；使用无需发信的 QA 验证链接验收。为兼容默认邮件与跨设备访问，signup 支持 implicit `/auth/verify` 与 token_hash `/auth/confirm` 两种确认方式。已授权的页面迁移与共享控件互相依赖，完成全量验证后合并为一次功能提交，避免中间提交缺依赖或无法编译。保留当前 feature branch，不合并 main；Vercel 从已授权工作区发布。

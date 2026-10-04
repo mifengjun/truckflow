@@ -15,3 +15,9 @@ test-results/
 .superpowers/
 
 supabase/.temp/
+.vercel
+.env*
+
+.vercel/
+
+!.env.example

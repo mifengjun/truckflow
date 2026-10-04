@@ -14,7 +14,7 @@ import { usePrototype } from "../provider";
 import { money } from "../model";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog } from "@/components/ui/dialog";
+import { PreviewDialog as Dialog } from "@/components/prototype/PreviewDialog";
 import { FormField } from "@/components/prototype/FormField";
 import {
   PageHeading,

@@ -11,6 +11,9 @@ export type Quote = {
   status: string;
 };
 export type Inquiry = {
+  customerName?: string;
+  customerContact?: string;
+  customerSource?: "admin_created" | "self_signup";
   id: string;
   number: string;
   customerId: string;
@@ -66,6 +69,7 @@ export type Recharge = {
   createdAt: string;
 };
 export type Customer = {
+  source: "admin_created" | "self_signup";
   id: string;
   name: string;
   contact: string;

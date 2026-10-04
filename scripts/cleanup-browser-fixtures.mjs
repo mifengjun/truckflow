@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync, unlinkSync } from "node:fs";
 import { parseEnv } from "node:util";
 import postgres from "postgres";
@@ -72,6 +73,8 @@ try {
       await tx.unsafe(`delete from app.${table} where customer_id=$1::uuid`, [
         fixture.companyId,
       ]);
+    const keys = identities.map(row => createHash("sha256").update(`login:${row.email.toLowerCase()}`).digest("hex"));
+    await tx`delete from app.rate_limits where key=any(${keys}::text[])`;
     await tx`delete from app.profiles where id=any(${ids}::uuid[])`;
     await tx`delete from app.customers where id=${fixture.companyId}`;
   });

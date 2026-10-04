@@ -1,6 +1,10 @@
 "use client";
+import { FieldGroup } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { useState, useEffect } from "react";
-import { Truck } from "lucide-react";
+import Link from "next/link";
+import { AuthFrame } from "./AuthFrame";
 import { Button } from "@/components/ui/button";
 import { api, Field, ErrorNotice } from "./shared";
 export function AuthForm({ setup = false }: { setup?: boolean }) {
@@ -54,36 +58,31 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
     }
   }
   return (
-    <main id="main-content" className="business-auth">
-      <div className="brand">
-        <Truck />
-        <span>
-          Truckflow<small>卡派协同工作台</small>
-        </span>
-      </div>
-      <div className="panel">
-        <h1>
-          {mode === "setup"
-            ? "设置账号密码"
-            : mode === "recover"
-              ? "找回密码"
-              : "登录工作区"}
-        </h1>
-        <p className="page-description">
-          {mode === "setup"
-            ? "账号由管理员邀请开通，请设置至少 12 位密码。"
-            : "使用管理员邀请的账号，进入客户中心或管理后台。"}
-        </p>
-        <ErrorNotice message={error} />
-        {message && (
-          <div className="notice" role="status">
-            {message}
-          </div>
-        )}
-        {accepting ? (
-          <p role="status">正在验证邀请…</p>
-        ) : (
-          <form className="business-stack" onSubmit={submit}>
+    <AuthFrame
+      title={
+        mode === "setup"
+          ? "设置账号密码"
+          : mode === "recover"
+            ? "找回密码"
+            : "登录工作区"
+      }
+      description={
+        mode === "setup"
+          ? "请设置至少 12 位密码。"
+          : "登录客户中心提交询价，或进入运营后台处理业务。"
+      }
+    >
+      <ErrorNotice message={error} />
+      {message && (
+        <Alert role="status">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
+      {accepting ? (
+        <p role="status">正在验证邀请…</p>
+      ) : (
+        <form className="business-stack" onSubmit={submit}>
+          <FieldGroup>
             {mode !== "setup" && (
               <Field
                 label="邮箱"
@@ -134,9 +133,14 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
                 {mode === "login" ? "忘记密码" : "返回登录"}
               </Button>
             )}
-          </form>
-        )}
-      </div>
-    </main>
+          </FieldGroup>
+        </form>
+      )}
+      {mode !== "setup" && (
+        <Button variant="link" asChild>
+          <Link href="/register">注册客户账号</Link>
+        </Button>
+      )}
+    </AuthFrame>
   );
 }

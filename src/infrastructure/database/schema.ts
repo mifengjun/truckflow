@@ -26,6 +26,10 @@ export const customers = app.table("customers", {
   email: text().notNull(),
   phone: text().notNull(),
   status: text().notNull().default("active"),
+  source: text()
+    .$type<"admin_created" | "self_signup">()
+    .notNull()
+    .default("admin_created"),
   createdAt: created(),
 });
 export const profiles = app.table("profiles", {

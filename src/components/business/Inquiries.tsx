@@ -1,4 +1,10 @@
 "use client";
+import { BusinessSection } from "./shared";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { FieldSet, FieldLegend, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,10 +50,11 @@ export function InquiryList({ staff = false }: { staff?: boolean }) {
       {!q.data ? (
         <Loading error={q.error} retry={() => q.refetch()} />
       ) : (
-        <div className="panel">
+        <BusinessSection title={<>询价记录</>}>
           <Table
             head={[
               "询价号",
+              ...(staff ? ["客户 / 联系人"] : []),
               "运输线路",
               "提货日期",
               "状态",
@@ -56,28 +63,39 @@ export function InquiryList({ staff = false }: { staff?: boolean }) {
             ]}
           >
             {q.data.map((i) => (
-              <tr key={i.id}>
-                <td>{i.number}</td>
-                <td>
+              <TableRow key={i.id}>
+                <TableCell>{i.number}</TableCell>
+                {staff && (
+                  <TableCell>
+                    {i.customerName}
+                    <div className="text-sm text-muted-foreground">
+                      {i.customerContact} ·{" "}
+                      {i.customerSource === "self_signup"
+                        ? "自主注册"
+                        : "管理员建立"}
+                    </div>
+                  </TableCell>
+                )}
+                <TableCell>
                   {i.data.origin.city}, {i.data.origin.state} →{" "}
                   {i.data.destination.city}, {i.data.destination.state}
-                </td>
-                <td>{i.data.pickupDate}</td>
-                <td>
+                </TableCell>
+                <TableCell>{i.data.pickupDate}</TableCell>
+                <TableCell>
                   <Status value={i.status} />
-                </td>
-                <td>{time(i.createdAt)}</td>
-                <td>
+                </TableCell>
+                <TableCell>{time(i.createdAt)}</TableCell>
+                <TableCell>
                   <TextLink href={`${base}/inquiries/${i.id}`}>
                     查看询价
                   </TextLink>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
           </Table>
           {!q.data.length && <Empty text="暂无询价记录" />}
           <Pager page={page} setPage={setPage} length={q.data.length} />
-        </div>
+        </BusinessSection>
       )}
     </>
   );
@@ -104,22 +122,27 @@ export function InquiryDetail({
       <div className="business-detail">
         <div>
           <Shipment data={i.data} />
-          <section className="panel">
+          <BusinessSection title={<>承运方案</>}>
             <div className="panel-header">
-              <h2>承运方案</h2>
               <span className="muted">参考时效，以实际运输为准</span>
             </div>
             {i.order && (
-              <div className="notice">
-                已生成订单{" "}
-                <TextLink
-                  href={`${staff ? "/admin" : "/portal"}/orders/${i.order.id}`}
-                >
-                  {i.order.number}
-                </TextLink>
-              </div>
+              <Alert>
+                <AlertDescription>
+                  已生成订单{" "}
+                  <TextLink
+                    href={`${staff ? "/admin" : "/portal"}/orders/${i.order.id}`}
+                  >
+                    {i.order.number}
+                  </TextLink>
+                </AlertDescription>
+              </Alert>
             )}
-            {i.reason && <div className="notice warning">{i.reason}</div>}
+            {i.reason && (
+              <Alert variant="warning">
+                <AlertDescription>{i.reason}</AlertDescription>
+              </Alert>
+            )}
             {!i.quotes.length && (
               <Empty
                 text={
@@ -181,20 +204,19 @@ export function InquiryDetail({
               ))}
             </div>
             <ErrorNotice message={operation.error} />
-          </section>
+          </BusinessSection>
         </div>
         {staff && i.status !== "ordered" ? (
           <QuoteForm inquiryId={id} />
         ) : (
-          <section className="panel">
-            <h2>询价说明</h2>
+          <BusinessSection title={<>询价说明</>}>
             <p className="page-description">
               报价为本次运输的销售金额，订单提交时系统再次校验有效期和可用余额。
             </p>
             <TextLink href={`${staff ? "/admin" : "/portal"}/inquiries`}>
               返回询价列表
             </TextLink>
-          </section>
+          </BusinessSection>
         )}
       </div>
     </>
@@ -225,94 +247,93 @@ function QuoteForm({ inquiryId }: { inquiryId: string }) {
     }
   }
   return (
-    <section className="panel">
-      <h2>录入人工报价</h2>
+    <BusinessSection title={<>录入人工报价</>}>
       <p className="page-description">
         费用逐项录入；成本独立存储，不返回客户接口。
       </p>
       <ErrorNotice message={operation.error} />
       {message && (
-        <div className="notice" role="status">
-          {message}
-        </div>
+        <Alert role="status">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
       <form onSubmit={submit} className="business-stack">
-        <Field name="carrier" label="承运商 / 代理" />
-        <Field
-          name="cost"
-          label="采购成本 USD"
-          inputMode="decimal"
-          pattern="[0-9]+(\.[0-9]{1,2})?"
-        />
-        <fieldset>
-          <legend>客户报价费用 USD</legend>
-          {fees.map((f, n) => (
-            <div className="business-fee-row" key={n}>
-              <input
-                className="input"
-                aria-label={`第 ${n + 1} 项费用名称`}
-                value={f.label}
-                required
-                onChange={(e) =>
-                  setFees(
-                    fees.map((v, k) =>
-                      k === n ? { ...v, label: e.target.value } : v,
-                    ),
-                  )
-                }
-              />
-              <input
-                className="input"
-                aria-label={`第 ${n + 1} 项费用金额`}
-                inputMode="decimal"
-                value={f.amount}
-                required
-                pattern="[0-9]+(\.[0-9]{1,2})?"
-                onChange={(e) =>
-                  setFees(
-                    fees.map((v, k) =>
-                      k === n ? { ...v, amount: e.target.value } : v,
-                    ),
-                  )
-                }
-              />
-              {fees.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  aria-label={`移除第 ${n + 1} 项费用`}
-                  onClick={() => setFees(fees.filter((_, k) => k !== n))}
-                >
-                  移除
-                </Button>
-              )}
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={fees.length >= 20}
-            onClick={() => setFees([...fees, { label: "", amount: "" }])}
-          >
-            添加费用
+        <FieldGroup>
+          <Field name="carrier" label="承运商 / 代理" />
+          <Field
+            name="cost"
+            label="采购成本 USD"
+            inputMode="decimal"
+            pattern="[0-9]+(\.[0-9]{1,2})?"
+          />
+          <FieldSet>
+            <FieldLegend>客户报价费用 USD</FieldLegend>
+            {fees.map((f, n) => (
+              <div className="business-fee-row" key={n}>
+                <Input
+                  aria-label={`第 ${n + 1} 项费用名称`}
+                  value={f.label}
+                  required
+                  onChange={(e) =>
+                    setFees(
+                      fees.map((v, k) =>
+                        k === n ? { ...v, label: e.target.value } : v,
+                      ),
+                    )
+                  }
+                />
+                <Input
+                  aria-label={`第 ${n + 1} 项费用金额`}
+                  inputMode="decimal"
+                  value={f.amount}
+                  required
+                  pattern="[0-9]+(\.[0-9]{1,2})?"
+                  onChange={(e) =>
+                    setFees(
+                      fees.map((v, k) =>
+                        k === n ? { ...v, amount: e.target.value } : v,
+                      ),
+                    )
+                  }
+                />
+                {fees.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    aria-label={`移除第 ${n + 1} 项费用`}
+                    onClick={() => setFees(fees.filter((_, k) => k !== n))}
+                  >
+                    移除
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={fees.length >= 20}
+              onClick={() => setFees([...fees, { label: "", amount: "" }])}
+            >
+              添加费用
+            </Button>
+          </FieldSet>
+          <Field
+            name="expiresAt"
+            label="报价有效至（你的本地时区）"
+            type="datetime-local"
+          />
+          <Field
+            name="transit"
+            label="参考时效"
+            placeholder="例如 3–5 个工作日"
+          />
+          <Field name="evidence" label="报价来源 / 核实依据" />
+          <Button disabled={operation.busy}>
+            {operation.busy ? "保存中…" : "保存报价草稿"}
           </Button>
-        </fieldset>
-        <Field
-          name="expiresAt"
-          label="报价有效至（你的本地时区）"
-          type="datetime-local"
-        />
-        <Field
-          name="transit"
-          label="参考时效"
-          placeholder="例如 3–5 个工作日"
-        />
-        <Field name="evidence" label="报价来源 / 核实依据" />
-        <Button disabled={operation.busy}>
-          {operation.busy ? "保存中…" : "保存报价草稿"}
-        </Button>
+        </FieldGroup>
       </form>
-      <hr className="business-rule" />
+      <Separator className="business-rule" />
       <form
         className="business-stack"
         onSubmit={async (e) => {
@@ -323,12 +344,14 @@ function QuoteForm({ inquiryId }: { inquiryId: string }) {
           );
         }}
       >
-        <h3>无法报价</h3>
-        <Field name="reason" label="客户可见原因" minLength={2} />
-        <Button variant="outline" disabled={operation.busy}>
-          标记暂无报价
-        </Button>
+        <FieldGroup>
+          <h3>无法报价</h3>
+          <Field name="reason" label="客户可见原因" minLength={2} />
+          <Button variant="outline" disabled={operation.busy}>
+            标记暂无报价
+          </Button>
+        </FieldGroup>
       </form>
-    </section>
+    </BusinessSection>
   );
 }

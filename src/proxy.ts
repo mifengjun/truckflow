@@ -40,5 +40,6 @@ export const config = {
     "/admin/:path*",
     "/api/v1/:path*",
     "/auth/:path*",
+    "/onboarding/:path*",
   ],
 };

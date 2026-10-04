@@ -1,10 +1,11 @@
 import "server-only";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, getTableColumns } from "drizzle-orm";
 import {
   inquiries,
   quotes,
   quoteCosts,
   orders,
+  customers,
 } from "@/infrastructure/database/schema";
 import { inquiryInput, quoteInput } from "./contracts";
 import {
@@ -42,6 +43,20 @@ export async function createInquiry(
 }
 export async function listInquiries(actor: Actor, page = 0) {
   authorize(actor, "customer_operator");
+  if (actor.identity === "staff")
+    return database()
+      .select({
+        ...getTableColumns(inquiries),
+        customerName: customers.name,
+        customerContact: customers.contact,
+        customerSource: customers.source,
+      })
+      .from(inquiries)
+      .innerJoin(customers, eq(inquiries.customerId, customers.id))
+      .where(scope(actor, inquiries.customerId))
+      .orderBy(desc(inquiries.createdAt), desc(inquiries.id))
+      .limit(20)
+      .offset(page * 20);
   return database()
     .select()
     .from(inquiries)

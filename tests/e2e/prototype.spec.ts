@@ -30,6 +30,7 @@ test("后台超时核实后客户可见同一订单状态，刷新与返回保�
   await page
     .getByRole("link", { name: "处理订单 TF-261004-1078", exact: true })
     .click();
+  await expect(page).toHaveURL(/\/prototype\/admin\/orders\/TF-261004-1078/);
   await page
     .getByRole("combobox", { name: "评审场景" })
     .selectOption("carrier-timeout");
@@ -55,6 +56,7 @@ test("重新打开已提交的确认链接只提供原订单，不重复下单",
     .getByRole("link", { name: "选择报价", exact: true })
     .first()
     .click();
+  await expect(page).toHaveURL(/\/prototype\/portal\/confirm\?quote=/);
   const confirmation = page.url();
   await page
     .getByRole("checkbox", { name: "我已核对收发货资料、货物和报价" })
@@ -63,6 +65,7 @@ test("重新打开已提交的确认链接只提供原订单，不重复下单",
   await expect(
     page.getByRole("heading", { name: "订单摘要", exact: true }),
   ).toBeVisible();
+  await expect(page).toHaveURL(/\/prototype\/portal\/orders\//);
   const order = page.url();
   await page.goto(confirmation);
   await expect(page.getByRole("button", { name: "确认提交订单" })).toHaveCount(

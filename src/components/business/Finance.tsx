@@ -1,4 +1,16 @@
 "use client";
+import { BusinessSection } from "./shared";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TableRow, TableCell } from "@/components/ui/table";
+import {
+  Field as UiField,
+  FieldLabel,
+  FieldGroup,
+} from "@/components/ui/field";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,17 +81,16 @@ export function FinancePage() {
             { name: "冻结资金", amount: account.data.heldAmount },
             { name: "可用余额", amount: account.data.available },
           ].map((c) => (
-            <div className="panel" key={c.name}>
+            <BusinessSection title={<>资金概览</>} key={c.name}>
               <span className="muted">{c.name}</span>
               <strong>{usd(c.amount)}</strong>
-            </div>
+            </BusinessSection>
           ))}
         </div>
       )}
       <div className="business-detail">
         <div>
-          <section className="panel">
-            <h2>充值申请</h2>
+          <BusinessSection title={<>充值申请</>}>
             {!requests.data ? (
               <Loading
                 error={requests.error}
@@ -98,15 +109,17 @@ export function FinancePage() {
                   ]}
                 >
                   {requests.data.map((r) => (
-                    <tr key={r.id}>
-                      <td>{time(r.createdAt)}</td>
-                      <td>{usd(r.amount)}</td>
-                      <td>{r.receivedAmount ? usd(r.receivedAmount) : "—"}</td>
-                      <td>
+                    <TableRow key={r.id}>
+                      <TableCell>{time(r.createdAt)}</TableCell>
+                      <TableCell>{usd(r.amount)}</TableCell>
+                      <TableCell>
+                        {r.receivedAmount ? usd(r.receivedAmount) : "—"}
+                      </TableCell>
+                      <TableCell>
                         <Status value={r.status} />
-                      </td>
-                      <td>{r.reason || r.reference}</td>
-                      <td>
+                      </TableCell>
+                      <TableCell>{r.reason || r.reference}</TableCell>
+                      <TableCell>
                         <a
                           className="business-link"
                           href={`/api/v1/attachments/${r.proofId}/download`}
@@ -115,31 +128,30 @@ export function FinancePage() {
                         >
                           查看凭证
                         </a>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
                 </Table>
                 {!requests.data.length && <Empty text="暂无充值申请" />}
               </>
             )}
-          </section>
-          <section className="panel">
-            <h2>资金流水</h2>
+          </BusinessSection>
+          <BusinessSection title={<>资金流水</>}>
             {!entries.data ? (
               <Loading error={entries.error} retry={() => entries.refetch()} />
             ) : (
               <>
                 <Table head={["时间", "类型", "金额", "余额变动", "冻结变动"]}>
                   {entries.data.map((l) => (
-                    <tr key={l.id}>
-                      <td>{time(l.createdAt)}</td>
-                      <td>
+                    <TableRow key={l.id}>
+                      <TableCell>{time(l.createdAt)}</TableCell>
+                      <TableCell>
                         <Status value={l.type} />
-                      </td>
-                      <td>{usd(l.amount)}</td>
-                      <td>{usd(l.balanceDelta)}</td>
-                      <td>{usd(l.heldDelta)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>{usd(l.amount)}</TableCell>
+                      <TableCell>{usd(l.balanceDelta)}</TableCell>
+                      <TableCell>{usd(l.heldDelta)}</TableCell>
+                    </TableRow>
                   ))}
                 </Table>
                 {!entries.data.length && <Empty text="暂无资金流水" />}
@@ -150,38 +162,39 @@ export function FinancePage() {
                 />
               </>
             )}
-          </section>
+          </BusinessSection>
         </div>
-        <section className="panel">
-          <h2>提交线下转账凭证</h2>
+        <BusinessSection title={<>提交线下转账凭证</>}>
           <p className="page-description">
             请使用运营提供的收款账户。填写金额仅用于申报，以财务核验结果为准。
           </p>
           <ErrorNotice message={operation.error} />
           {message && (
-            <div className="notice" role="status">
-              {message}
-            </div>
+            <Alert role="status">
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
           )}
           <form className="business-stack" onSubmit={submit}>
-            <Field
-              name="amount"
-              label="申报金额 USD"
-              inputMode="decimal"
-              pattern="[0-9]+(\.[0-9]{1,2})?"
-            />
-            <Field name="reference" label="转账参考号 / 说明" />
-            <Field
-              name="file"
-              label="转账凭证（PDF / PNG / JPEG，最大 3 MB）"
-              type="file"
-              accept="application/pdf,image/png,image/jpeg"
-            />
-            <Button disabled={operation.busy}>
-              {operation.busy ? "提交中…" : "提交财务核验"}
-            </Button>
+            <FieldGroup>
+              <Field
+                name="amount"
+                label="申报金额 USD"
+                inputMode="decimal"
+                pattern="[0-9]+(\.[0-9]{1,2})?"
+              />
+              <Field name="reference" label="转账参考号 / 说明" />
+              <Field
+                name="file"
+                label="转账凭证（PDF / PNG / JPEG，最大 3 MB）"
+                type="file"
+                accept="application/pdf,image/png,image/jpeg"
+              />
+              <Button disabled={operation.busy}>
+                {operation.busy ? "提交中…" : "提交财务核验"}
+              </Button>
+            </FieldGroup>
           </form>
-        </section>
+        </BusinessSection>
       </div>
     </>
   );
@@ -197,7 +210,7 @@ export function Settlement() {
         description="核对银行实际到账金额及银行交易参考号。重复核验不会再次入账。"
       />
       <div className="business-detail">
-        <section className="panel">
+        <BusinessSection title={<>资金概览</>}>
           {!q.data ? (
             <Loading error={q.error} retry={() => q.refetch()} />
           ) : (
@@ -213,15 +226,17 @@ export function Settlement() {
                 ]}
               >
                 {q.data.map((r) => (
-                  <tr key={r.id}>
-                    <td>{time(r.createdAt)}</td>
-                    <td>{usd(r.amount)}</td>
-                    <td>{r.receivedAmount ? usd(r.receivedAmount) : "—"}</td>
-                    <td>
+                  <TableRow key={r.id}>
+                    <TableCell>{time(r.createdAt)}</TableCell>
+                    <TableCell>{usd(r.amount)}</TableCell>
+                    <TableCell>
+                      {r.receivedAmount ? usd(r.receivedAmount) : "—"}
+                    </TableCell>
+                    <TableCell>
                       <Status value={r.status} />
-                    </td>
-                    <td>{r.reference}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{r.reference}</TableCell>
+                    <TableCell>
                       {r.status === "pending" ? (
                         <Button
                           variant="outline"
@@ -233,15 +248,15 @@ export function Settlement() {
                       ) : (
                         r.reason
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </Table>
               {!q.data.length && <Empty text="暂无充值申请" />}
               <Pager page={page} setPage={setPage} length={q.data.length} />
             </>
           )}
-        </section>
+        </BusinessSection>
         {selected ? (
           <Verification
             key={selected.id}
@@ -249,12 +264,11 @@ export function Settlement() {
             onDone={() => setSelected(null)}
           />
         ) : (
-          <section className="panel">
-            <h2>核验操作</h2>
+          <BusinessSection title={<>核验操作</>}>
             <p className="page-description">
               选择一笔待核验申请。查看凭证并核对银行到账后再确认入账。
             </p>
-          </section>
+          </BusinessSection>
         )}
       </div>
     </>
@@ -271,8 +285,7 @@ function Verification({
     [reject, setReject] = useState(false),
     account = useData<Account>(`account?customerId=${r.customerId}`);
   return (
-    <section className="panel">
-      <h2>财务核验</h2>
+    <BusinessSection title={<>财务核验</>}>
       <p className="page-description">
         申报金额 {usd(r.amount)} · {r.reference}
       </p>
@@ -308,44 +321,47 @@ function Verification({
           if (result) onDone();
         }}
       >
-        <div className="form-field">
-          <label htmlFor="verify-action">处理方式</label>
-          <select
-            className="input"
-            id="verify-action"
-            value={reject ? "reject" : "verify"}
-            onChange={(e) => setReject(e.target.value === "reject")}
+        <FieldGroup>
+          <UiField className="form-field">
+            <FieldLabel htmlFor="verify-action">处理方式</FieldLabel>
+            <NativeSelect
+              id="verify-action"
+              value={reject ? "reject" : "verify"}
+              onChange={(e) => setReject(e.target.value === "reject")}
+            >
+              <NativeSelectOption value="verify">
+                确认实际到账并入账
+              </NativeSelectOption>
+              <NativeSelectOption value="reject">驳回申请</NativeSelectOption>
+            </NativeSelect>
+          </UiField>
+          {!reject && (
+            <>
+              <Field
+                name="amount"
+                label="银行实际到账 USD"
+                inputMode="decimal"
+                pattern="[0-9]+(\.[0-9]{1,2})?"
+              />
+              <Field name="bankReference" label="银行交易参考号（须唯一）" />
+            </>
+          )}
+          <Field
+            name="reason"
+            label={reject ? "客户可见驳回原因" : "核验说明（客户可见）"}
+            minLength={2}
+          />
+          <Button
+            disabled={operation.busy}
+            variant={reject ? "destructive" : "default"}
           >
-            <option value="verify">确认实际到账并入账</option>
-            <option value="reject">驳回申请</option>
-          </select>
-        </div>
-        {!reject && (
-          <>
-            <Field
-              name="amount"
-              label="银行实际到账 USD"
-              inputMode="decimal"
-              pattern="[0-9]+(\.[0-9]{1,2})?"
-            />
-            <Field name="bankReference" label="银行交易参考号（须唯一）" />
-          </>
-        )}
-        <Field
-          name="reason"
-          label={reject ? "客户可见驳回原因" : "核验说明（客户可见）"}
-          minLength={2}
-        />
-        <Button
-          disabled={operation.busy}
-          variant={reject ? "destructive" : "default"}
-        >
-          {operation.busy ? "处理中…" : reject ? "确认驳回" : "确认入账"}
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
-          关闭
-        </Button>
+            {operation.busy ? "处理中…" : reject ? "确认驳回" : "确认入账"}
+          </Button>
+          <Button type="button" variant="ghost" onClick={onDone}>
+            关闭
+          </Button>
+        </FieldGroup>
       </form>
-    </section>
+    </BusinessSection>
   );
 }

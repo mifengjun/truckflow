@@ -1,5 +1,5 @@
 import { FileText, Clock3, LockKeyhole } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
+import { PreviewDialog as Dialog } from "./PreviewDialog";
 import { Button } from "@/components/ui/button";
 import type { PrototypeOrder } from "@/modules/prototype/model";
 export function AttachmentList({ order }: { order: PrototypeOrder }) {

@@ -1,4 +1,26 @@
 "use client";
+import { Field as UiField, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Table as UiTable,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty as UiEmpty,
+  EmptyHeader,
+  EmptyDescription,
+} from "@/components/ui/empty";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
 import Link from "next/link";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import {
@@ -8,6 +30,38 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+export function BusinessSection({
+  title,
+  description,
+  children,
+  footer,
+}: {
+  title: ReactNode;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>{title}</h2>
+        </CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+      {footer && <CardFooter>{footer}</CardFooter>}
+    </Card>
+  );
+}
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -86,9 +140,9 @@ export function useOperation() {
 }
 export function ErrorNotice({ message }: { message?: string }) {
   return message ? (
-    <div className="notice error" role="alert">
-      {message}
-    </div>
+    <Alert variant="destructive">
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   ) : null;
 }
 export function Loading({
@@ -109,7 +163,9 @@ export function Loading({
     </>
   ) : (
     <div className="panel" role="status">
-      正在加载数据…
+      <span className="sr-only">正在加载数据…</span>
+      <Skeleton className="h-5 w-1/3" />
+      <Skeleton className="mt-4 h-20 w-full" />
     </div>
   );
 }
@@ -148,21 +204,21 @@ export function Field({
   value?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value">) {
   return (
-    <div className="form-field">
-      <label htmlFor={name}>
+    <UiField className="form-field">
+      <FieldLabel htmlFor={name}>
         {label}
         {required && <span> *</span>}
-      </label>
-      <input
+      </FieldLabel>
+      <Input
         id={name}
         name={name}
-        className="input"
+
         type={type}
         required={required}
         defaultValue={value}
         {...rest}
       />
-    </div>
+    </UiField>
   );
 }
 export const labels: Record<string, string> = {
@@ -193,11 +249,21 @@ export const labels: Record<string, string> = {
 };
 export function Status({ value }: { value: string }) {
   return (
-    <span
-      className={`badge ${["accepted", "verified", "delivered", "published", "active"].includes(value) ? "badge-success" : ["failed", "rejected", "frozen"].includes(value) ? "badge-error" : ["unknown", "pending", "pending_review", "draft"].includes(value) ? "badge-warning" : "badge-blue"}`}
+    <Badge
+      variant={
+        ["accepted", "verified", "delivered", "published", "active"].includes(
+          value,
+        )
+          ? "success"
+          : ["failed", "rejected", "frozen"].includes(value)
+            ? "error"
+            : ["unknown", "pending", "pending_review", "draft"].includes(value)
+              ? "warning"
+              : "info"
+      }
     >
       {labels[value] ?? value}
-    </span>
+    </Badge>
   );
 }
 export function usd(value: string) {
@@ -213,7 +279,13 @@ export function time(value: string) {
   });
 }
 export function Empty({ text }: { text: string }) {
-  return <div className="business-empty">{text}</div>;
+  return (
+    <UiEmpty>
+      <EmptyHeader>
+        <EmptyDescription>{text}</EmptyDescription>
+      </EmptyHeader>
+    </UiEmpty>
+  );
 }
 export function Pager({
   page,
@@ -225,23 +297,33 @@ export function Pager({
   length: number;
 }) {
   return (
-    <div className="business-actions">
-      <Button
-        variant="outline"
-        disabled={!page}
-        onClick={() => setPage(page - 1)}
-      >
-        上一页
-      </Button>
-      <span>第 {page + 1} 页</span>
-      <Button
-        variant="outline"
-        disabled={length < 20}
-        onClick={() => setPage(page + 1)}
-      >
-        下一页
-      </Button>
-    </div>
+    <Pagination aria-label="列表分页">
+      <PaginationContent>
+        <PaginationItem>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!page}
+            onClick={() => setPage(page - 1)}
+          >
+            上一页
+          </Button>
+        </PaginationItem>
+        <PaginationItem>
+          <span aria-live="polite">第 {page + 1} 页</span>
+        </PaginationItem>
+        <PaginationItem>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={length < 20}
+            onClick={() => setPage(page + 1)}
+          >
+            下一页
+          </Button>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }
 export function Table({
@@ -253,16 +335,16 @@ export function Table({
 }) {
   return (
     <div className="table-scroll">
-      <table className="data-table">
-        <thead>
-          <tr>
+      <UiTable className="data-table">
+        <TableHeader>
+          <TableRow>
             {head.map((h) => (
-              <th key={h}>{h}</th>
+              <TableHead key={h}>{h}</TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>{children}</tbody>
-      </table>
+          </TableRow>
+        </TableHeader>
+        <TableBody>{children}</TableBody>
+      </UiTable>
     </div>
   );
 }

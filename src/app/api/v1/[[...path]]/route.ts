@@ -4,7 +4,7 @@ import { requireActor } from "@/infrastructure/auth/actor";
 import { sessionClient } from "@/infrastructure/auth/supabase";
 import { readConfig } from "@/infrastructure/config";
 import { throttle } from "@/infrastructure/auth/throttle";
-import { BusinessError, homeForActor } from "@/modules/business/rules";
+import { BusinessError } from "@/modules/business/rules";
 import * as Customers from "@/modules/business/customers";
 import * as Addresses from "@/modules/business/addresses";
 import * as Inquiry from "@/modules/business/inquiries";
@@ -12,6 +12,18 @@ import * as Orders from "@/modules/business/orders";
 import * as Finance from "@/modules/business/finance";
 import * as Invites from "@/modules/business/invitations";
 import * as Files from "@/modules/business/files";
+import {
+  requireSessionIdentity,
+  requireVerifiedIdentity,
+} from "@/infrastructure/auth/identity";
+import {
+  completeOnboarding,
+  getOnboardingState,
+} from "@/modules/business/onboarding";
+import {
+  registerCustomer,
+  resendSignupVerification,
+} from "@/modules/business/registration";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const reply = (data: unknown, status = 200) =>
@@ -58,6 +70,26 @@ async function handler(
         throw new BusinessError("INVALID_JSON", "请求内容格式错误", 400);
       }
     };
+    if (p === "auth/register" && method === "POST")
+      return reply(await registerCustomer(await body()));
+    if (p === "auth/resend" && method === "POST")
+      return reply(await resendSignupVerification(await body()));
+    if (p === "auth/onboarding") {
+      const identity = await requireVerifiedIdentity();
+      if (method === "GET") return reply(await getOnboardingState(identity));
+      if (method === "POST")
+        return reply(await completeOnboarding(identity, await body()));
+      return notFound();
+    }
+    if (p === "auth/logout" && method === "POST") {
+      await requireSessionIdentity();
+      const { error } = await (
+        await sessionClient()
+      ).auth.signOut({ scope: "local" });
+      if (error)
+        throw new BusinessError("LOGOUT_FAILED", "退出失败，请重试", 502);
+      return reply({ ok: true });
+    }
     if (p === "auth/login" && method === "POST") {
       const d = z
         .object({ email: z.email(), password: z.string().min(1).max(200) })
@@ -69,10 +101,7 @@ async function handler(
       if (error)
         throw new BusinessError("LOGIN_FAILED", "邮箱或密码不正确", 401);
       try {
-        const actor = await requireActor();
-        return reply({
-          destination: homeForActor(actor),
-        });
+        return reply(await getOnboardingState(await requireVerifiedIdentity()));
       } catch (e) {
         await client.auth.signOut();
         throw e;
@@ -106,23 +135,15 @@ async function handler(
           "邀请已失效，请联系管理员",
           401,
         );
-      await requireActor();
-      return reply({ ok: true });
-    }
-    const actor = await requireActor();
-    if (p === "auth/logout" && method === "POST") {
-      const { error } = await (
-        await sessionClient()
-      ).auth.signOut({ scope: "local" });
-      if (error)
-        throw new BusinessError("LOGOUT_FAILED", "退出失败，请重试", 502);
-      return reply({ ok: true });
+      const state = await getOnboardingState(await requireVerifiedIdentity());
+      return reply({ ok: true, destination: state.destination });
     }
     if (p === "auth/password" && method === "POST") {
       const d = z
         .object({ password: z.string().min(12, "密码至少 12 位").max(200) })
         .strict()
         .parse(await body());
+      const state = await getOnboardingState(await requireVerifiedIdentity());
       const { error } = await (await sessionClient()).auth.updateUser(d);
       if (error)
         throw new BusinessError(
@@ -131,9 +152,10 @@ async function handler(
           422,
         );
       return reply({
-        destination: homeForActor(actor),
+        destination: state.destination,
       });
     }
+    const actor = await requireActor();
     if (p === "me" && method === "GET")
       return reply({ actor, environment: readConfig().environment });
     const page = z.coerce
@@ -336,10 +358,27 @@ async function handler(
         { error: "DUPLICATE", message: "记录已存在或已经处理，请刷新后查看。" },
         409,
       );
-    console.error("Business request failed", {
-      name: e instanceof Error ? e.name : "Unknown",
-      path: new URL(req.url).pathname,
-    });
+    console.error(
+      "Business request failed",
+      JSON.stringify({
+        name: e instanceof Error ? e.name : "Unknown",
+        path: new URL(req.url).pathname,
+        code:
+          code ||
+          (typeof e === "object" && e !== null && "code" in e
+            ? String(e.code)
+            : undefined),
+        constraint:
+          typeof e === "object" &&
+          e !== null &&
+          "cause" in e &&
+          typeof e.cause === "object" &&
+          e.cause !== null &&
+          "constraint_name" in e.cause
+            ? String(e.cause.constraint_name)
+            : undefined,
+      }),
+    );
     return reply(
       { error: "SERVER_ERROR", message: "操作未完成，请稍后重试。" },
       500,

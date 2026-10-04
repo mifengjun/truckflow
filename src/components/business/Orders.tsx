@@ -1,4 +1,19 @@
 "use client";
+import { BusinessSection } from "./shared";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Field as UiField,
+  FieldLabel,
+  FieldGroup,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -52,27 +67,25 @@ export function OrderList({ staff = false }: { staff?: boolean }) {
           )
         }
       />
-      <div className="panel">
+      <BusinessSection title={<>订单记录</>}>
         <div className="business-filters">
-          <div className="form-field">
-            <label htmlFor="order-search">搜索本页订单</label>
-            <input
-              className="input"
+          <UiField className="form-field">
+            <FieldLabel htmlFor="order-search">搜索本页订单</FieldLabel>
+            <Input
               id="order-search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="订单号 / 承运商 / 承运商单号"
             />
-          </div>
-          <div className="form-field">
-            <label htmlFor="order-status">筛选本页状态</label>
-            <select
-              className="input"
+          </UiField>
+          <UiField className="form-field">
+            <FieldLabel htmlFor="order-status">筛选本页状态</FieldLabel>
+            <NativeSelect
               id="order-status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
-              <option value="">全部状态</option>
+              <NativeSelectOption value="">全部状态</NativeSelectOption>
               {[
                 { id: "pending_review", text: "待审核" },
                 { id: "submitting", text: "正在下单" },
@@ -80,12 +93,12 @@ export function OrderList({ staff = false }: { staff?: boolean }) {
                 { id: "accepted", text: "已接单" },
                 { id: "failed", text: "已拒单" },
               ].map((s) => (
-                <option key={s.id} value={s.id}>
+                <NativeSelectOption key={s.id} value={s.id}>
                   {s.text}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
-          </div>
+            </NativeSelect>
+          </UiField>
         </div>
         {!q.data ? (
           <Loading error={q.error} retry={() => q.refetch()} />
@@ -103,29 +116,29 @@ export function OrderList({ staff = false }: { staff?: boolean }) {
               ]}
             >
               {rows?.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.number}</td>
-                  <td>
+                <TableRow key={o.id}>
+                  <TableCell>{o.number}</TableCell>
+                  <TableCell>
                     {o.snapshot.inquiry.origin.city} →{" "}
                     {o.snapshot.inquiry.destination.city}
                     <small className="muted" style={{ display: "block" }}>
                       {o.snapshot.inquiry.pickupDate}
                     </small>
-                  </td>
-                  <td>{o.snapshot.carrier}</td>
-                  <td>{usd(o.amount)}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell>{o.snapshot.carrier}</TableCell>
+                  <TableCell>{usd(o.amount)}</TableCell>
+                  <TableCell>
                     <Status value={o.status} />
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <Status value={o.fulfillment} />
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <TextLink href={`${base}/orders/${o.id}`}>
                       查看详情
                     </TextLink>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
             </Table>
             {!rows?.length && (
@@ -140,7 +153,7 @@ export function OrderList({ staff = false }: { staff?: boolean }) {
             <Pager page={page} setPage={setPage} length={q.data.length} />
           </>
         )}
-      </div>
+      </BusinessSection>
     </>
   );
 }
@@ -189,17 +202,18 @@ export function OrderConfirm({
       />
       <ErrorNotice message={operation.error} />
       {i.order && (
-        <div className="notice">
-          已创建订单{" "}
-          <TextLink href={`/portal/orders/${i.order.id}`}>
-            {i.order.number}
-          </TextLink>
-        </div>
+        <Alert>
+          <AlertDescription>
+            已创建订单{" "}
+            <TextLink href={`/portal/orders/${i.order.id}`}>
+              {i.order.number}
+            </TextLink>
+          </AlertDescription>
+        </Alert>
       )}
       <div className="business-detail">
         <Shipment data={i.data} />
-        <section className="panel">
-          <h2>{t.carrier}</h2>
+        <BusinessSection title={<>{t.carrier}</>}>
           <p className="page-description">{t.transit}</p>
           {t.fees.map((f, n) => (
             <div key={n} className="business-money-row">
@@ -212,7 +226,7 @@ export function OrderConfirm({
             <strong>{usd(t.amount)}</strong>
           </div>
           <p className="field-hint">有效至 {time(t.expiresAt)}</p>
-          <hr className="business-rule" />
+          <Separator className="business-rule" />
           {!funds.data ? (
             <Loading error={funds.error} retry={() => funds.refetch()} />
           ) : (
@@ -221,14 +235,18 @@ export function OrderConfirm({
                 当前可用余额：<strong>{usd(funds.data.available)}</strong>
               </p>
               {!enough && (
-                <div className="notice warning">
-                  余额不足，请由具有财务权限的账号提交充值凭证，并等待财务核验。
-                </div>
+                <Alert variant="warning">
+                  <AlertDescription>
+                    余额不足，请由具有财务权限的账号提交充值凭证，并等待财务核验。
+                  </AlertDescription>
+                </Alert>
               )}
             </>
           )}
           {expired && (
-            <div className="notice warning">报价已过期，请重新询价。</div>
+            <Alert variant="warning">
+              <AlertDescription>报价已过期，请重新询价。</AlertDescription>
+            </Alert>
           )}
           <div className="business-actions">
             <Button
@@ -246,7 +264,7 @@ export function OrderConfirm({
           <p className="field-hint">
             承运商确认接单后扣款；明确拒单后解冻；结果待核实时保持冻结。
           </p>
-        </section>
+        </BusinessSection>
       </div>
     </>
   );
@@ -269,16 +287,17 @@ export function OrderDetail({
         action={<Status value={o.status} />}
       />
       {o.status === "unknown" && (
-        <div className="notice warning">
-          承运商接单结果待核实，资金保持冻结。请等待运营核实结果。
-        </div>
+        <Alert variant="warning">
+          <AlertDescription>
+            承运商接单结果待核实，资金保持冻结。请等待运营核实结果。
+          </AlertDescription>
+        </Alert>
       )}
       <div className="business-detail">
         <div>
           <Shipment data={o.snapshot.inquiry} />
-          <section className="panel">
+          <BusinessSection title={<>费用与运单</>}>
             <div className="panel-header">
-              <h2>费用与运单</h2>
               <strong>{usd(o.amount)}</strong>
             </div>
             <p>承运商：{o.snapshot.carrier}</p>
@@ -294,7 +313,7 @@ export function OrderDetail({
                 <span>{usd(f.amount)}</span>
               </div>
             ))}
-            <hr className="business-rule" />
+            <Separator className="business-rule" />
             <h3>订单单据</h3>
             {o.documents.length ? (
               <ul>
@@ -315,9 +334,8 @@ export function OrderDetail({
               <Empty text="暂无单据，运营上传后可下载" />
             )}
             {staff && <DocumentUpload orderId={id} />}
-          </section>
-          <section className="panel">
-            <h2>处理记录</h2>
+          </BusinessSection>
+          <BusinessSection title={<>处理记录</>}>
             <ul className="business-timeline">
               {o.timeline.map((e) => (
                 <li key={e.id}>
@@ -329,13 +347,12 @@ export function OrderDetail({
                 </li>
               ))}
             </ul>
-          </section>
+          </BusinessSection>
         </div>
         {staff ? (
           <OrderOperations order={o} />
         ) : (
-          <section className="panel">
-            <h2>订单状态</h2>
+          <BusinessSection title={<>订单状态</>}>
             <p className="page-description">
               {o.status === "accepted"
                 ? "承运商已接单，运费已扣款。"
@@ -346,7 +363,7 @@ export function OrderDetail({
             <div className="business-actions">
               <TextLink href="/portal/orders">返回订单列表</TextLink>
             </div>
-          </section>
+          </BusinessSection>
         )}
       </div>
     </>
@@ -362,8 +379,7 @@ function OrderOperations({ order: o }: { order: Order }) {
         ? "in_transit"
         : "delivered";
   return (
-    <section className="panel">
-      <h2>订单处理</h2>
+    <BusinessSection title={<>订单处理</>}>
       <ErrorNotice message={operation.error} />
       {["pending_review", "failed"].includes(o.status) && (
         <>
@@ -416,38 +432,48 @@ function OrderOperations({ order: o }: { order: Order }) {
             );
           }}
         >
-          <p className="page-description">
-            核实承运商结果后记录。结果未知时不能再次发起下单。
-          </p>
-          <div className="form-field">
-            <label htmlFor="result">承运商结果</label>
-            <select
-              className="input"
-              id="result"
-              value={result}
-              onChange={(e) => setResult(e.target.value)}
-            >
-              <option value="unknown">结果待核实（保持冻结）</option>
-              <option value="accepted">已接单（扣款）</option>
-              <option value="failed">明确拒单（解冻）</option>
-            </select>
-          </div>
-          {result === "accepted" && (
-            <>
-              <Field name="externalId" label="承运商单号" />
-              <Field name="tracking" label="跟踪号" required={false} />
-            </>
-          )}
-          {result === "failed" && (
-            <label className="business-check">
-              <input type="checkbox" name="confirmed" required />
-              已核实承运商未生成订单
-            </label>
-          )}
-          <Field name="evidence" label="核实依据（内部可见）" minLength={2} />
-          <Button disabled={operation.busy}>
-            {operation.busy ? "提交中…" : "记录处理结果"}
-          </Button>
+          <FieldGroup>
+            <p className="page-description">
+              核实承运商结果后记录。结果未知时不能再次发起下单。
+            </p>
+            <UiField className="form-field">
+              <FieldLabel htmlFor="result">承运商结果</FieldLabel>
+              <NativeSelect
+                id="result"
+                value={result}
+                onChange={(e) => setResult(e.target.value)}
+              >
+                <NativeSelectOption value="unknown">
+                  结果待核实（保持冻结）
+                </NativeSelectOption>
+                <NativeSelectOption value="accepted">
+                  已接单（扣款）
+                </NativeSelectOption>
+                <NativeSelectOption value="failed">
+                  明确拒单（解冻）
+                </NativeSelectOption>
+              </NativeSelect>
+            </UiField>
+            {result === "accepted" && (
+              <>
+                <Field name="externalId" label="承运商单号" />
+                <Field name="tracking" label="跟踪号" required={false} />
+              </>
+            )}
+            {result === "failed" && (
+              <FieldLabel
+                htmlFor="confirmed-no-order"
+                className="business-check"
+              >
+                <Checkbox id="confirmed-no-order" name="confirmed" required />
+                已核实承运商未生成订单
+              </FieldLabel>
+            )}
+            <Field name="evidence" label="核实依据（内部可见）" minLength={2} />
+            <Button disabled={operation.busy}>
+              {operation.busy ? "提交中…" : "记录处理结果"}
+            </Button>
+          </FieldGroup>
         </form>
       )}
       {o.status === "accepted" && o.fulfillment !== "delivered" && (
@@ -465,12 +491,14 @@ function OrderOperations({ order: o }: { order: Order }) {
             );
           }}
         >
-          <p className="page-description">
-            下一运输节点：
-            <Status value={next} />
-          </p>
-          <Field name="evidence" label="客户可见进度说明" minLength={2} />
-          <Button disabled={operation.busy}>确认更新运输进度</Button>
+          <FieldGroup>
+            <p className="page-description">
+              下一运输节点：
+              <Status value={next} />
+            </p>
+            <Field name="evidence" label="客户可见进度说明" minLength={2} />
+            <Button disabled={operation.busy}>确认更新运输进度</Button>
+          </FieldGroup>
         </form>
       )}
       {o.fulfillment === "delivered" && (
@@ -479,7 +507,7 @@ function OrderOperations({ order: o }: { order: Order }) {
       <div className="business-actions">
         <TextLink href="/admin/orders">返回工作台</TextLink>
       </div>
-    </section>
+    </BusinessSection>
   );
 }
 function DocumentUpload({ orderId }: { orderId: string }) {
@@ -498,24 +526,26 @@ function DocumentUpload({ orderId }: { orderId: string }) {
         if (result) form.reset();
       }}
     >
-      <div className="form-field">
-        <label htmlFor="document-kind">单据类型</label>
-        <select className="input" name="kind" id="document-kind">
-          <option value="BOL">BOL 提货单</option>
-          <option value="POD">POD 签收单</option>
-          <option value="other">其他单据</option>
-        </select>
-      </div>
-      <Field
-        name="file"
-        label="文件（PDF / PNG / JPEG，最大 3 MB）"
-        type="file"
-        accept="application/pdf,image/png,image/jpeg"
-      />
-      <ErrorNotice message={operation.error} />
-      <Button variant="outline" disabled={operation.busy}>
-        {operation.busy ? "上传中…" : "上传单据"}
-      </Button>
+      <FieldGroup>
+        <UiField className="form-field">
+          <FieldLabel htmlFor="document-kind">单据类型</FieldLabel>
+          <NativeSelect name="kind" id="document-kind">
+            <NativeSelectOption value="BOL">BOL 提货单</NativeSelectOption>
+            <NativeSelectOption value="POD">POD 签收单</NativeSelectOption>
+            <NativeSelectOption value="other">其他单据</NativeSelectOption>
+          </NativeSelect>
+        </UiField>
+        <Field
+          name="file"
+          label="文件（PDF / PNG / JPEG，最大 3 MB）"
+          type="file"
+          accept="application/pdf,image/png,image/jpeg"
+        />
+        <ErrorNotice message={operation.error} />
+        <Button variant="outline" disabled={operation.busy}>
+          {operation.busy ? "上传中…" : "上传单据"}
+        </Button>
+      </FieldGroup>
     </form>
   );
 }
