@@ -120,3 +120,5 @@ Auth 注册与数据库开户不是跨服务原子事务，因此分为两阶段
 ## 实施状态（2026-10-04）
 
 已实现并部署到 https://truckflow-neo.vercel.app ，本轮验收说明见 `2026-10-04-self-registration-acceptance.md`。用户暂无 SMTP，明确要求先完成代码与验收页面；自主注册发信保持关闭，已有登录正常。真实邮件服务配置与投递验收完成后才开放外部自主注册。
+
+SMTP 后续更新：Gmail SMTP 已配置并收到实际测试邮件，自主注册现已开启；正式 `/auth/verify` 回跳已核验。最新部署及验证证据以 `2026-10-04-self-registration-acceptance.md` 的 SMTP 开通章节为准。

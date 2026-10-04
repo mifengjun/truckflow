@@ -188,3 +188,5 @@ Vitest 验证业务规则；数据库集成测试验证真实事务、约束与�
 正式外壳现使用官方 Sidebar/Sheet、Avatar、DropdownMenu 和 Breadcrumb，页面分区使用 Card，客户冻结使用 AlertDialog；原有表单、表格、反馈等组件迁移保留。基础 CSS 进入 base layer，避免覆盖组件语义颜色和字号。TanStack Table 引擎和完整共享地址/金额控件仍按上述状态待后续开发。
 
 最新部署 `dpl_1aQHaMbvSMHAw99HK45sTRMZwZ7Y` 已就绪。`REGISTRATION_ENABLED=false`，等待 SMTP 与真实投递验收；不把当前注册入口视为可获客投产。详细页面、邮件配置和验收范围见 `2026-10-04-self-registration-acceptance.md`。
+
+2026-10-04 SMTP 开通更新：已接入 Gmail 自定义 SMTP，用户确认收到真实 Auth 密码重设邮件；正式注册回跳 `/auth/verify` 已精确加入 allowlist，邮箱确认保持开启。`REGISTRATION_ENABLED=true`，最新验收部署 `dpl_9BuqDQV1HaBoexivytxkQxF2PTWG`，线上注册按钮可用。此前 SMTP 未配置与注册关闭的状态为历史记录。当前仍为 staging，独立生产环境与大陆多运营商网络验收状态不变。

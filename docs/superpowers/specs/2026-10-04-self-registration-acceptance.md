@@ -9,7 +9,7 @@
 - 登录：https://truckflow-neo.vercel.app/login
 - 现有管理员继续使用原账号；后台可查看客户来源与询价联系信息。
 
-目前没有 SMTP，`REGISTRATION_ENABLED=false`。注册页面可验收布局、输入、验证提示和导航，但不会发送邮件或建立未验证的正式客户。已有账号正常使用。验证、开户和询价自动测试使用临时 QA 身份和不发信的验证链接；不代表真实邮件投递已经验收。
+当前已配置 Gmail 自定义 SMTP，用户确认收到实际密码重设测试邮件；Vercel `REGISTRATION_ENABLED=true`，注册入口已开放，邮箱确认仍开启。注册用户必须完成邮箱验证后才能建立客户资料。既有代码验收使用临时 QA 身份；真实新客户注册收件和填写开户资料由线上验收继续验证。
 
 ## shadcn 实际接入
 
@@ -21,7 +21,7 @@
 
 新增迁移：`20261004113026_self_registration.sql`，在 private `app.customers` 添加受约束的 `source` 列，既有客户默认 `admin_created`。已应用到指定开发项目；未开放 app schema 公共 Data API。回退代码时可保留该列及默认值，不删除新客户数据。
 
-## 邮件服务后续配置
+## 邮件服务配置参考（Gmail SMTP 已接入）
 
 准备 SMTP 服务商、已验证发件域名或邮箱、SMTP 主机、端口、用户名及密码/API Key。敏感信息只填入 Supabase 私有 SMTP 配置，不提交代码或通过聊天发送。
 
@@ -42,4 +42,14 @@
 - 最新部署：`dpl_1aQHaMbvSMHAw99HK45sTRMZwZ7Y`。线上首页、注册和登录 200；匿名 401、跨站写入 403、邮件未准备注册 503；QA 客户与员工登录及业务数据读取 200。
 - 临时浏览器客户、员工及开户 QA 身份已清理；只删除这些 QA 邮箱的登录计数，没有调整正常限流。真实管理员 `fengjun.mi@gmail.com` 活跃员工和管理权限已核验保留。
 
-SMTP 的真实性与投递质量仍未验收；Supabase 当前允许邮箱注册、邮箱确认开启，应用额外开关阻止公开发信。`/auth/verify` 精确回跳 allowlist 在配置 SMTP 时补齐并实测。
+以上为首次发布时的历史记录；后续 SMTP 开通状态见下节。
+
+
+## SMTP 开通（2026-10-04）
+
+- 用户已保存 Gmail SMTP，主机 smtp.gmail.com、端口 587，SMTP 密码由用户在 Supabase 后台填写，未读取或提交密码。
+- 向已有管理员邮箱发送密码重设测试请求成功，用户明确确认已收到。没有修改管理员密码或角色。
+- Site URL 保持 https://truckflow-neo.vercel.app，新增精确回跳 https://truckflow-neo.vercel.app/auth/verify；原有 invite/recovery 回跳保留。注册模板使用默认 ConfirmationURL。
+- 用不发信的临时 QA signup 链接验证实际 Supabase 确认端点：303 到正式 /auth/verify，携带会话令牌，邮箱确认状态已生效；测试会话和身份已删除。没有在日志输出令牌。
+- Vercel 注册开关开启，部署 dpl_9BuqDQV1HaBoexivytxkQxF2PTWG READY。仍是 staging 与现有开发数据库，不代表独立生产环境上线。
+- Gmail 用于当前小规模验收；后续域名与专门发信服务确定后可替换 SMTP，不需重做注册系统。
