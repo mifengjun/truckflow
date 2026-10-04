@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNow } from "../use-now";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +15,7 @@ import {
 } from "@/components/prototype/shared";
 export function Confirm() {
   const now = useNow();
+  const queryClient = useQueryClient();
   const { state, setState } = usePrototype();
   const params = useSearchParams();
   const router = useRouter();
@@ -29,7 +31,9 @@ export function Confirm() {
       mounted.current = false;
     };
   }, []);
-  const quote = state.quotes.find((q) => q.id === params.get("quote"));
+  const quoteId = params.get("quote");
+  const quote = state.quotes.find((q) => q.id === quoteId);
+  const existingOrder = state.orders.find((o) => o.quote.id === quoteId);
   const valid =
     quote &&
     quote.draftRevision === state.draft.revision &&
@@ -39,7 +43,7 @@ export function Confirm() {
     lock.current = true;
     setBusy(true);
     setError("");
-    intent.current ??= crypto.randomUUID();
+    intent.current ??= `quote:${quote.id}`;
     try {
       await new Promise((r) => setTimeout(r, 600));
       if (!mounted.current) return;
@@ -58,6 +62,31 @@ export function Confirm() {
       lock.current = false;
     }
   }
+  if (existingOrder)
+    return (
+      <>
+        <PageHeading
+          title="这笔订单已创建"
+          description={`订单 ${existingOrder.id} 已保存，重复打开确认页不会再次下单。`}
+        />
+        <div className="form-actions">
+          <Button asChild>
+            <Link href={`/prototype/portal/orders/${existingOrder.id}`}>
+              查看已创建订单
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              queryClient.removeQueries({ queryKey: ["quotes"] });
+              router.push("/prototype/portal/quotes?request=1");
+            }}
+          >
+            重新询价，创建另一笔订单
+          </Button>
+        </div>
+      </>
+    );
   if (!valid)
     return (
       <>
@@ -77,7 +106,6 @@ export function Confirm() {
         返回报价比较
       </Link>
       <PageHeading
-        eyebrow="REVIEW & SUBMIT / 确认下单"
         title="最后一步，核对运输信息"
         description="订单将使用以下资料与报价快照，提交后交由运营审核。"
       />

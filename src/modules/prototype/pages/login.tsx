@@ -13,7 +13,7 @@ export function Login({ reset = false }: { reset?: boolean }) {
         <span className="brand-icon">
           <Truck size={24} />
         </span>
-        <p className="eyebrow">TRUCKFLOW / 卡派协同</p>
+
         <h1>
           让每一程运输，
           <br />

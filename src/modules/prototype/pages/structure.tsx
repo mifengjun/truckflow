@@ -26,7 +26,6 @@ export function IndexPage() {
   return (
     <>
       <PageHeading
-        eyebrow="PROTOTYPE GUIDE / 评审入口"
         title="从页面到流程，逐项确认"
         description="20 个页面入口 · 核心流程可操作 · 其他模块展示页面与状态"
       />
@@ -643,7 +642,6 @@ export function Structure({ spec }: { spec: PageSpec }) {
   return (
     <>
       <PageHeading
-        eyebrow={`${spec.id} / ${spec.role === "admin" ? "运营管理" : "客户服务"}`}
         title={spec.name}
         description="页面层级、字段与状态结构，供业务和开发共同确认。"
         action={<Badge>结构与状态</Badge>}

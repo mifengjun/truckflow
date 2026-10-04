@@ -54,7 +54,6 @@ export function Quotes() {
         返回修改运输资料
       </Link>
       <PageHeading
-        eyebrow="QUOTE COMPARISON / 比较报价"
         title="选择适合这次运输的方案"
         description="比较总价、服务和参考时效。所有金额均以 USD 展示。"
         action={

@@ -49,3 +49,25 @@ test("后台超时核实后客户可见同一订单状态，刷新与返回保�
     page.getByText("确认承运商已接单", { exact: true }),
   ).toBeVisible();
 });
+test("重新打开已提交的确认链接只提供原订单，不重复下单", async ({ page }) => {
+  await page.goto("/prototype/portal/quotes?request=1");
+  await page
+    .getByRole("link", { name: "选择报价", exact: true })
+    .first()
+    .click();
+  const confirmation = page.url();
+  await page
+    .getByRole("checkbox", { name: "我已核对收发货资料、货物和报价" })
+    .check();
+  await page.getByRole("button", { name: "确认提交订单" }).click();
+  await expect(
+    page.getByRole("heading", { name: "订单摘要", exact: true }),
+  ).toBeVisible();
+  const order = page.url();
+  await page.goto(confirmation);
+  await expect(page.getByRole("button", { name: "确认提交订单" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("link", { name: "查看已创建订单", exact: true }).click();
+  await expect(page).toHaveURL(order);
+});

@@ -63,7 +63,6 @@ export function Inquiry() {
   return (
     <>
       <PageHeading
-        eyebrow="NEW INQUIRY / 新建询价"
         title="为下一程，找到合适运力"
         description="填写运输信息，比较承运商报价，再确认下单。"
         action={

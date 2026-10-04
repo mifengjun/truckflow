@@ -52,6 +52,7 @@ export const resultSchema = z.enum([
   "failed",
 ]);
 export type OrderResult = z.infer<typeof resultSchema>;
+const timestampSchema = z.iso.datetime({ offset: true });
 export const orderSchema = z.object({
   id: z.string(),
   intentId: z.string(),
@@ -59,10 +60,10 @@ export const orderSchema = z.object({
   quote: quoteSchema,
   result: resultSchema,
   fulfillment: z.enum(["unassigned", "pickup", "transit", "delivered"]),
-  createdAt: z.string(),
+  createdAt: timestampSchema,
   tracking: z.string(),
   events: z.array(
-    z.object({ at: z.string(), actor: z.string(), text: z.string() }),
+    z.object({ at: timestampSchema, actor: z.string(), text: z.string() }),
   ),
 });
 export type PrototypeOrder = z.infer<typeof orderSchema>;

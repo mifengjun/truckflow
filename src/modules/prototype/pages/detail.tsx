@@ -106,9 +106,6 @@ export function Detail({ id, admin = false }: { id: string; admin?: boolean }) {
         返回{admin ? "订单工作台" : "订单列表"}
       </Link>
       <PageHeading
-        eyebrow={
-          admin ? "ORDER PROCESSING / 订单处理" : "ORDER DETAILS / 订单详情"
-        }
         title={order.id}
         description={`${order.draft.customer} · 创建于 ${localDate(order.createdAt)}（洛杉矶时间）`}
         action={

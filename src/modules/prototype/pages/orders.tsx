@@ -159,7 +159,6 @@ export function Orders({ admin = false }: { admin?: boolean }) {
   return (
     <>
       <PageHeading
-        eyebrow={admin ? "OPERATIONS / 运营中心" : "SHIPMENTS / 运输管理"}
         title={admin ? "订单工作台" : "我的订单"}
         description={
           admin
