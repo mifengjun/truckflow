@@ -1,0 +1,6 @@
+import {it,expect} from 'vitest';
+import {filterOrders} from '../../src/modules/prototype/order-query';
+import {createInitialState,generateQuotes,submitOrder,updateOrderResult} from '../../src/modules/prototype/model';
+import {loadState} from '../../src/modules/prototype/storage';
+it('刷新后可用 URL 筛选找到新订单，结果确认不会重建快照',()=>{const s=createInitialState();s.quotes=generateQuotes(s.draft,1801560000000);const submitted=submitOrder(s,s.quotes[0].id,'fresh',1801560000000);const order=submitted.orders[0];const recovered=loadState(JSON.stringify(submitted));expect(filterOrders(recovered.orders,new URLSearchParams({q:order.id,status:'pending'})).map(o=>o.id)).toEqual([order.id]);const timeout=updateOrderResult(recovered,order.id,'uncertain');const accepted=updateOrderResult(timeout,order.id,'accepted');expect(accepted.orders[0].draft).toEqual(order.draft);expect(accepted.orders[0].events.map(e=>e.text)).toEqual(['订单已创建，等待资料审核','请求超时，等待核实承运商结果','确认承运商已接单']);expect(filterOrders(accepted.orders,new URLSearchParams({q:order.id,status:'pickup'}))).toHaveLength(1);});
+it('日期筛选采用物流当地日期，搜索和状态同时生效',()=>{const s=createInitialState();expect(filterOrders(s.orders,new URLSearchParams({date:'2026-10-04',status:'pending'})).map(o=>o.id)).toEqual(['TF-261004-1078']);expect(filterOrders(s.orders,new URLSearchParams({q:'不存在'}))).toHaveLength(0);});
