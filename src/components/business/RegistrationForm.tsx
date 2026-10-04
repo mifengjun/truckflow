@@ -95,7 +95,8 @@ export function RegistrationForm({ enabled }: { enabled: boolean }) {
             </Field>
           ))}
           <p className="text-sm text-muted-foreground">
-            密码至少 12 位。已有客户的同事账号请通过管理员邀请加入。
+            密码至少 6
+            位，包含字母和数字。已有客户的同事账号请通过管理员邀请加入。
           </p>
           <Button disabled={!enabled || isSubmitting}>
             {isSubmitting ? "正在提交…" : "注册并发送验证邮件"}

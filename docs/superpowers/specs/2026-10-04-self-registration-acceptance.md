@@ -53,3 +53,7 @@
 - 用不发信的临时 QA signup 链接验证实际 Supabase 确认端点：303 到正式 /auth/verify，携带会话令牌，邮箱确认状态已生效；测试会话和身份已删除。没有在日志输出令牌。
 - Vercel 注册开关开启，部署 dpl_9BuqDQV1HaBoexivytxkQxF2PTWG READY。仍是 staging 与现有开发数据库，不代表独立生产环境上线。
 - Gmail 用于当前小规模验收；后续域名与专门发信服务确定后可替换 SMTP，不需重做注册系统。
+
+### 密码规则调整（2026-10-04）
+
+按用户要求，注册和设置/找回密码统一使用至少 6 位、必须包含字母与数字的规则，不要求特殊符号。共用 passwordInput 校验，登录继续允许已有密码。Supabase 临时身份测试接受 6 位密码；临时身份已删除，无测试邮件。单元测试 24/24，注册及六位密码更新 HTTP 集成 6/6，lint/typecheck/build 通过。部署 `dpl_GAbfbwLjHtaX5vkYhMnihmM9HbuK`。

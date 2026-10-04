@@ -29,6 +29,7 @@ import {
   registerCustomer,
   resendSignupVerification,
 } from "@/modules/business/registration";
+import { passwordInput } from "@/modules/business/auth-contracts";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const reply = (data: unknown, status = 200) =>
@@ -145,7 +146,7 @@ async function handler(
     }
     if (p === "auth/password" && method === "POST") {
       const d = z
-        .object({ password: z.string().min(12, "密码至少 12 位").max(200) })
+        .object({ password: passwordInput })
         .strict()
         .parse(await body());
       const state = await getOnboardingState(await requireVerifiedIdentity());

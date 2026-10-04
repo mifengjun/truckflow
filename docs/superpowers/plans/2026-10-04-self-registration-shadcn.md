@@ -59,7 +59,7 @@
 **Files:** Create `src/modules/business/registration.ts`, `tests/unit/auth-contracts.test.ts`, `tests/integration/registration-http.test.ts`; Modify `src/app/api/v1/[[...path]]/route.ts`, `src/app/auth/confirm/route.ts`, `src/infrastructure/auth/throttle.ts`.
 
 **Interfaces:**
-- `registerCustomer(value: unknown): Promise<{ message: string }>`；输入 email/password/confirmPassword，邮箱标准化，密码 12–200 字符并必须一致，不允许 roles/customerId。
+- `registerCustomer(value: unknown): Promise<{ message: string }>`；输入 email/password/confirmPassword，邮箱标准化，密码 6–200 字符、包含字母和数字，并且两次输入必须一致（按用户最新要求调整），不允许 roles/customerId。
 - `resendSignupVerification(value: unknown): Promise<{ message: string }>`；只接受 email。注册及重发每邮箱独立沿用 15 分钟最多 10 次限流，公网滥用再结合 Supabase 服务端限额。
 - API `POST auth/register`、`POST auth/resend`、`GET auth/onboarding`、`POST auth/onboarding`；前三者不要错误依赖已开户 Actor，开户读写必须依赖 VerifiedIdentity。所有写入保留现有 Origin、类型、体积校验。
 - 注册确认邮件采用 token_hash + type=signup 的受控 `/auth/confirm` 路径以支持跨设备。signup 成功走 Task 1 状态检查，invite/recovery 成功走 `/auth/setup`；错误走 `/auth/verify?status=invalid`。仅接受明确列出的类型和站内固定目的地。

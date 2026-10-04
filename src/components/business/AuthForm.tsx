@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { passwordInput } from "@/modules/business/auth-contracts";
 import { AuthFrame } from "./AuthFrame";
 import { Button } from "@/components/ui/button";
 import { api, Field, ErrorNotice } from "./shared";
@@ -40,6 +41,10 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
     try {
       if (mode === "setup" && d.get("password") !== d.get("confirm"))
         throw new Error("两次密码不一致");
+      if (mode === "setup") {
+        const parsed = passwordInput.safeParse(d.get("password"));
+        if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+      }
       const result = await api<{ destination?: string; message?: string }>(
         `auth/${mode === "setup" ? "password" : mode === "recover" ? "recover" : "login"}`,
         "POST",
@@ -68,7 +73,7 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
       }
       description={
         mode === "setup"
-          ? "请设置至少 12 位密码。"
+          ? "请设置至少 6 位密码，包含字母和数字。"
           : "登录客户中心提交询价，或进入运营后台处理业务。"
       }
     >
@@ -96,7 +101,7 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
                 label="密码"
                 name="password"
                 type="password"
-                minLength={mode === "setup" ? 12 : 1}
+                minLength={mode === "setup" ? 6 : 1}
                 autoComplete={
                   mode === "setup" ? "new-password" : "current-password"
                 }
@@ -107,7 +112,7 @@ export function AuthForm({ setup = false }: { setup?: boolean }) {
                 label="再次输入密码"
                 name="confirm"
                 type="password"
-                minLength={12}
+                minLength={6}
                 autoComplete="new-password"
               />
             )}

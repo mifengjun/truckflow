@@ -40,3 +40,16 @@ it("routes signup separately from recovery and refuses external destinations", (
   ).toThrow();
   expect(() => confirmationDestination("unknown", "/onboarding")).toThrow();
 });
+it("accepts six-character letter-number passwords and rejects incomplete combinations", () => {
+  const input = (password: string) =>
+    registrationInput.safeParse({
+      email: "user@example.com",
+      password,
+      confirmPassword: password,
+    });
+  expect(input("abc123").success).toBe(true);
+  expect(input("ABC123").success).toBe(true);
+  expect(input("LongPassword123!").success).toBe(true);
+  for (const password of ["ab123", "123456", "abcdef", "!!!!!!"])
+    expect(input(password).success).toBe(false);
+});

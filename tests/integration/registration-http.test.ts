@@ -138,7 +138,7 @@ it("confirms signup on another device and recovers expired links safely", async 
   );
 });
 
-it("allows verified users to reset passwords before onboarding", async () => {
+it("allows verified users to set a six-character password before onboarding", async () => {
   const login = await request(
     "auth/login",
     { email: users[2].email, password: users[2].password },
@@ -151,7 +151,7 @@ it("allows verified users to reset passwords before onboarding", async () => {
     .join("; ");
   const reset = await request(
     "auth/password",
-    { password: randomUUID() + "Aa1!" },
+    { password: "abc123" },
     session,
   );
   expect(reset.status).toBe(200);
