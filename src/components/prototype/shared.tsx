@@ -1,12 +1,211 @@
-import type {ReactNode} from 'react';
-import {ArrowRight,PackageSearch,AlertCircle,LockKeyhole} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {usePrototype} from '@/modules/prototype/provider';
-import {resultLabels,fulfillmentLabels,type PrototypeOrder,type InquiryDraft,money} from '@/modules/prototype/model';
-export function PageHeading({eyebrow,title,description,action}:{eyebrow?:string;title:string;description?:string;action?:ReactNode}){return <div className="page-heading"><div>{eyebrow&&<p className="eyebrow">{eyebrow}</p>}<h1>{title}</h1>{description&&<p className="page-description">{description}</p>}</div>{action}</div>;}
-export function Badge({children,tone='neutral'}:{children:ReactNode;tone?:'neutral'|'success'|'warning'|'error'|'blue'}){return <span className={`badge badge-${tone}`}><span/>{children}</span>;}
-export function OrderStatus({order,kind='result'}:{order:PrototypeOrder;kind?:'result'|'fulfillment'}){if(kind==='fulfillment')return <Badge tone={order.fulfillment==='delivered'?'success':order.fulfillment==='transit'?'blue':'neutral'}>{fulfillmentLabels[order.fulfillment]}</Badge>;return <Badge tone={order.result==='accepted'?'success':order.result==='failed'?'error':'warning'}>{resultLabels[order.result]}</Badge>;}
-export function EmptyState({title='暂无记录',description='请调整筛选条件，或开始一笔新的询价。',action}:{title?:string;description?:string;action?:ReactNode}){return <div className="empty-state"><PackageSearch size={36}/><h2>{title}</h2><p>{description}</p>{action}</div>;}
-export function ScenarioGuard({children}:{children:ReactNode}){const {scenario,setScenario}=usePrototype();if(scenario==='loading')return <div className="panel skeleton" role="status" aria-label="正在加载"><div/><div/><div/><div/><p>正在加载示例数据…</p></div>;if(scenario==='error'||scenario==='denied')return <div className="panel empty-state">{scenario==='denied'?<LockKeyhole size={32}/>:<AlertCircle size={32}/>}<h2>{scenario==='denied'?'暂无此页面的访问权限':'数据暂时无法加载'}</h2><p>{scenario==='denied'?'请联系管理员核对角色权限。此为无权限状态示例。':'你的草稿仍保留，可以恢复默认场景后重试。'}</p><Button variant="outline" onClick={()=>setScenario('default')}>恢复默认场景</Button></div>;return children;}
-export function AddressSummary({draft}:{draft:InquiryDraft}){return <div className="route-summary"><div><span className="route-marker"/><small>提货地址</small><strong>{draft.origin.name||'待填写'}</strong><p>{draft.origin.address||'待填写完整提货地址'}</p><small>{draft.origin.contact}</small></div><ArrowRight className="route-arrow" size={18}/><div><span className="route-marker destination"/><small>收货地址</small><strong>{draft.destination.name||'待填写'}</strong><p>{draft.destination.address||'待填写完整收货地址'}</p><small>{draft.destination.contact}</small></div></div>;}
-export function Summary({draft,amount}:{draft:InquiryDraft;amount?:number}){return <aside className="panel summary"><h2>本次运输摘要</h2><AddressSummary draft={draft}/><dl className="facts"><div><dt>运输方式</dt><dd>{draft.mode} · 美国卡派</dd></div><div><dt>提货日期</dt><dd>{draft.date||'待填写'}</dd></div><div><dt>货物数量</dt><dd>{draft.goods.reduce((n,g)=>n+(Number(g.quantity)||0),0)} 件 / {draft.goods.length} 种</dd></div><div><dt>货物总重</dt><dd>{draft.goods.reduce((n,g)=>n+(Number(g.weight)||0),0)} lb</dd></div><div><dt>包装</dt><dd>{draft.pallets} 托盘</dd></div></dl>{amount!==undefined&&<div className="summary-total"><span>报价总额 · USD</span><strong>{money(amount)}</strong></div>}<p className="small muted">运价与时效均为评审示例，服务范围待业务确认。</p></aside>;}
+import type { ReactNode } from "react";
+import {
+  ArrowRight,
+  PackageSearch,
+  AlertCircle,
+  LockKeyhole,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePrototype } from "@/modules/prototype/provider";
+import {
+  resultLabels,
+  fulfillmentLabels,
+  type PrototypeOrder,
+  type InquiryDraft,
+  money,
+} from "@/modules/prototype/model";
+export function PageHeading({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="page-heading">
+      <div>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        <h1>{title}</h1>
+        {description && <p className="page-description">{description}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+export function Badge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "success" | "warning" | "error" | "blue";
+}) {
+  return (
+    <span className={`badge badge-${tone}`}>
+      <span />
+      {children}
+    </span>
+  );
+}
+export function OrderStatus({
+  order,
+  kind = "result",
+}: {
+  order: PrototypeOrder;
+  kind?: "result" | "fulfillment";
+}) {
+  if (kind === "fulfillment")
+    return (
+      <Badge
+        tone={
+          order.fulfillment === "delivered"
+            ? "success"
+            : order.fulfillment === "transit"
+              ? "blue"
+              : "neutral"
+        }
+      >
+        {fulfillmentLabels[order.fulfillment]}
+      </Badge>
+    );
+  return (
+    <Badge
+      tone={
+        order.result === "accepted"
+          ? "success"
+          : order.result === "failed"
+            ? "error"
+            : "warning"
+      }
+    >
+      {resultLabels[order.result]}
+    </Badge>
+  );
+}
+export function EmptyState({
+  title = "暂无记录",
+  description = "请调整筛选条件，或开始一笔新的询价。",
+  action,
+}: {
+  title?: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="empty-state">
+      <PackageSearch size={36} />
+      <h2>{title}</h2>
+      <p>{description}</p>
+      {action}
+    </div>
+  );
+}
+export function ScenarioGuard({ children }: { children: ReactNode }) {
+  const { scenario, setScenario } = usePrototype();
+  if (scenario === "loading")
+    return (
+      <div className="panel skeleton" role="status" aria-label="正在加载">
+        <div />
+        <div />
+        <div />
+        <div />
+        <p>正在加载示例数据…</p>
+      </div>
+    );
+  if (scenario === "error" || scenario === "denied")
+    return (
+      <div className="panel empty-state">
+        {scenario === "denied" ? (
+          <LockKeyhole size={32} />
+        ) : (
+          <AlertCircle size={32} />
+        )}
+        <h2>
+          {scenario === "denied" ? "暂无此页面的访问权限" : "数据暂时无法加载"}
+        </h2>
+        <p>
+          {scenario === "denied"
+            ? "请联系管理员核对角色权限。此为无权限状态示例。"
+            : "你的草稿仍保留，可以恢复默认场景后重试。"}
+        </p>
+        <Button variant="outline" onClick={() => setScenario("default")}>
+          恢复默认场景
+        </Button>
+      </div>
+    );
+  return children;
+}
+export function AddressSummary({ draft }: { draft: InquiryDraft }) {
+  return (
+    <div className="route-summary">
+      <div>
+        <span className="route-marker" />
+        <small>提货地址</small>
+        <strong>{draft.origin.name || "待填写"}</strong>
+        <p>{draft.origin.address || "待填写完整提货地址"}</p>
+        <small>{draft.origin.contact}</small>
+      </div>
+      <ArrowRight className="route-arrow" size={18} />
+      <div>
+        <span className="route-marker destination" />
+        <small>收货地址</small>
+        <strong>{draft.destination.name || "待填写"}</strong>
+        <p>{draft.destination.address || "待填写完整收货地址"}</p>
+        <small>{draft.destination.contact}</small>
+      </div>
+    </div>
+  );
+}
+export function Summary({
+  draft,
+  amount,
+}: {
+  draft: InquiryDraft;
+  amount?: number;
+}) {
+  return (
+    <aside className="panel summary">
+      <h2>本次运输摘要</h2>
+      <AddressSummary draft={draft} />
+      <dl className="facts">
+        <div>
+          <dt>运输方式</dt>
+          <dd>{draft.mode} · 美国卡派</dd>
+        </div>
+        <div>
+          <dt>提货日期</dt>
+          <dd>{draft.date || "待填写"}</dd>
+        </div>
+        <div>
+          <dt>货物数量</dt>
+          <dd>
+            {draft.goods.reduce((n, g) => n + (Number(g.quantity) || 0), 0)} 件
+            / {draft.goods.length} 种
+          </dd>
+        </div>
+        <div>
+          <dt>货物总重</dt>
+          <dd>
+            {draft.goods.reduce((n, g) => n + (Number(g.weight) || 0), 0)} lb
+          </dd>
+        </div>
+        <div>
+          <dt>包装</dt>
+          <dd>{draft.pallets} 托盘</dd>
+        </div>
+      </dl>
+      {amount !== undefined && (
+        <div className="summary-total">
+          <span>报价总额 · USD</span>
+          <strong>{money(amount)}</strong>
+        </div>
+      )}
+      <p className="small muted">
+        运价与时效均为评审示例，服务范围待业务确认。
+      </p>
+    </aside>
+  );
+}

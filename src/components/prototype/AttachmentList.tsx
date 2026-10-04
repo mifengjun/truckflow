@@ -1,5 +1,53 @@
-import {FileText,Clock3,LockKeyhole} from 'lucide-react';
-import {Dialog} from '@/components/ui/dialog';
-import {Button} from '@/components/ui/button';
-import type {PrototypeOrder} from '@/modules/prototype/model';
-export function AttachmentList({order}:{order:PrototypeOrder}){return <div className="attachment-list">{['BOL 提单','装箱单','托盘标签','POD 签收证明'].map((name,i)=>{const ready=i===1||order.result==='accepted'&&i<3;return <div key={name}><FileText size={19}/><span><strong>{name}</strong><small>{ready?'示例文档可预览':i===3?'签收后生成':'承运商接单后生成'}</small></span>{ready?<Dialog title={name+' · 示例'} description="用于确认附件的展示与权限结构，不可用于实际运输。" trigger={<Button variant="ghost" size="sm">预览</Button>}><div className="document-preview"><h3>TRUCKFLOW / SAMPLE</h3><p>订单：{order.id}</p><p>提货：{order.draft.origin.address}</p><p>收货：{order.draft.destination.address}</p><p>货物：{order.draft.goods.map(g=>g.name).join('、')}</p><p>状态：示例文档 · 非有效运输凭证</p></div></Dialog>:<span className="attachment-pending">{i===3?<LockKeyhole size={13}/>:<Clock3 size={13}/>}待生成</span>}</div>;})}</div>;}
+import { FileText, Clock3, LockKeyhole } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import type { PrototypeOrder } from "@/modules/prototype/model";
+export function AttachmentList({ order }: { order: PrototypeOrder }) {
+  return (
+    <div className="attachment-list">
+      {["BOL 提单", "装箱单", "托盘标签", "POD 签收证明"].map((name, i) => {
+        const ready = i === 1 || (order.result === "accepted" && i < 3);
+        return (
+          <div key={name}>
+            <FileText size={19} />
+            <span>
+              <strong>{name}</strong>
+              <small>
+                {ready
+                  ? "示例文档可预览"
+                  : i === 3
+                    ? "签收后生成"
+                    : "承运商接单后生成"}
+              </small>
+            </span>
+            {ready ? (
+              <Dialog
+                title={name + " · 示例"}
+                description="用于确认附件的展示与权限结构，不可用于实际运输。"
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    预览
+                  </Button>
+                }
+              >
+                <div className="document-preview">
+                  <h3>TRUCKFLOW / SAMPLE</h3>
+                  <p>订单：{order.id}</p>
+                  <p>提货：{order.draft.origin.address}</p>
+                  <p>收货：{order.draft.destination.address}</p>
+                  <p>货物：{order.draft.goods.map((g) => g.name).join("、")}</p>
+                  <p>状态：示例文档 · 非有效运输凭证</p>
+                </div>
+              </Dialog>
+            ) : (
+              <span className="attachment-pending">
+                {i === 3 ? <LockKeyhole size={13} /> : <Clock3 size={13} />}
+                待生成
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
