@@ -334,8 +334,8 @@ export function Table({
   children: ReactNode;
 }) {
   return (
-    <div className="table-scroll">
-      <UiTable className="data-table">
+    <div className="rounded-md border">
+      <UiTable>
         <TableHeader>
           <TableRow>
             {head.map((h) => (

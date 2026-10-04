@@ -66,8 +66,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
+  --radius-sm: var(--app-radius-sm, var(--radius));
+  --radius-md: var(--app-radius-md, var(--radius));
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
@@ -2903,13 +2903,10 @@ select.field:hover {
     padding: 18px;
   }
 }
-/* Formal business pages share the approved prototype's visual language. */
-.production-app {
-  min-height: 100dvh;
-  color: var(--foreground);
-  background: var(--background);
-
-  /* shadcn/ui New York defaults, scoped to the live business workspaces. */
+/* Native tokens also reach portals outside the business page container. */
+:root:has(.production-app),
+:root:has(.production-auth) {
+  /* shadcn/ui New York neutral theme. Prototype routes keep their theme. */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -2930,8 +2927,8 @@ select.field:hover {
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --app-radius-sm: calc(var(--radius) - 4px);
+  --app-radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --surface: var(--card);
@@ -2944,6 +2941,15 @@ select.field:hover {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+body:has(.production-app),
+body:has(.production-auth) {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.production-app {
+  min-height: 100dvh;
+  color: var(--foreground);
+  background: var(--background);
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
 .production-app .sidebar {
@@ -3188,4 +3194,15 @@ fieldset {
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* Native FieldSet owns its layout; legacy fieldset boxes belong to prototypes. */
+:is(.production-app, .production-auth) [data-slot="field-set"] {
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+}
+:is(body:has(.production-app), body:has(.production-auth))
+  :is(button, a, select, input, textarea, summary):focus-visible {
+  outline-color: var(--ring);
 }

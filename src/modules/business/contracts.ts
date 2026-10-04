@@ -1,5 +1,9 @@
 import { z } from "zod";
-const text = z.string().trim().min(1, "请填写此项").max(500);
+const text = z
+  .string()
+  .trim()
+  .min(1, "请填写此项")
+  .max(500, "最多填写 500 个字符");
 export const moneyInput = z
   .string()
   .regex(/^(0|[1-9]\d{0,14})(\.\d{1,2})?$/, "金额最多两位小数");
@@ -13,7 +17,11 @@ const positive = z
 export const addressInput = z
   .object({
     name: text,
-    street: z.string().trim().min(1).max(2000),
+    street: z
+      .string()
+      .trim()
+      .min(1, "请填写街道地址")
+      .max(2000, "地址最多 2,000 个字符"),
     city: text,
     state: z.string().regex(/^[A-Z]{2}$/, "州须为两位大写代码"),
     postalCode: z.string().regex(/^\d{5}(-\d{4})?$/, "请输入美国邮编"),
@@ -33,7 +41,7 @@ export const addressInput = z
   .strict();
 const date = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "请选择提货日期")
   .refine(
     (v) =>
       !isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v,
@@ -50,7 +58,11 @@ export const inquiryInput = z
         z.object({
           name: text,
           sku: z.string().max(100).optional(),
-          quantity: z.number().int().min(1).max(1000000),
+          quantity: z
+            .number({ error: "请输入件数" })
+            .int("件数须为整数")
+            .min(1, "至少填写 1 件")
+            .max(1000000, "件数不能超过 1,000,000"),
           weight: positive,
           length: positive,
           width: positive,
@@ -60,8 +72,8 @@ export const inquiryInput = z
       .min(1)
       .max(30),
     services: z.array(z.enum(["liftgate", "appointment", "inside"])).max(3),
-    reference: z.string().max(100).optional(),
-    notes: z.string().max(2000).optional(),
+    reference: z.string().max(100, "参考号最多 100 个字符").optional(),
+    notes: z.string().max(2000, "补充说明最多 2,000 个字符").optional(),
     dangerous: z.literal(false).default(false),
   })
   .strict();

@@ -2,9 +2,22 @@ import "server-only";
 import { createHash } from "node:crypto";
 import Decimal from "decimal.js";
 import { z } from "zod";
-import { eq, and, desc, sql } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  asc,
+  desc,
+  sql,
+  ilike,
+  gte,
+  lte,
+  count,
+  getTableColumns,
+} from "drizzle-orm";
 import {
   orders,
+  customers,
   inquiries,
   quotes,
   accounts,
@@ -15,6 +28,7 @@ import {
   attachments,
 } from "@/infrastructure/database/schema";
 import { resultInput } from "./contracts";
+import { LIST_PAGE_SIZE, searchPattern, type OrderListQuery } from "./listing";
 import {
   database,
   scope,
@@ -160,6 +174,62 @@ export async function listOrders(actor: Actor, page = 0) {
     .orderBy(desc(orders.createdAt), desc(orders.id))
     .limit(20)
     .offset(page * 20);
+}
+export async function getOrderPage(
+  actor: Actor,
+  page: number,
+  query: OrderListQuery,
+) {
+  authorize(actor, "customer_operator");
+  const pattern = searchPattern(query.search);
+  const pickupDate = sql<string>`${orders.snapshot}->'inquiry'->>'pickupDate'`;
+  const where = and(
+    scope(actor, orders.customerId),
+    query.status ? eq(orders.status, query.status) : undefined,
+    query.from ? gte(pickupDate, query.from) : undefined,
+    query.to ? lte(pickupDate, query.to) : undefined,
+    query.search
+      ? or(
+          ilike(orders.number, pattern),
+          ilike(orders.externalId, pattern),
+          ilike(orders.tracking, pattern),
+          sql`${orders.snapshot}->>'carrier' ilike ${pattern}`,
+          sql`concat_ws(' ', ${orders.snapshot}->'inquiry'->'origin'->>'city', ${orders.snapshot}->'inquiry'->'origin'->>'state', ${orders.snapshot}->'inquiry'->'destination'->>'city', ${orders.snapshot}->'inquiry'->'destination'->>'state') ilike ${pattern}`,
+          actor.identity === "staff"
+            ? ilike(customers.name, pattern)
+            : undefined,
+        )
+      : undefined,
+  );
+  const columns = {
+    createdAt: orders.createdAt,
+    number: orders.number,
+    amount: orders.amount,
+    pickupDate,
+  };
+  const order =
+    query.direction === "asc"
+      ? asc(columns[query.sort])
+      : desc(columns[query.sort]);
+  const [rows, [result]] = await Promise.all([
+    database()
+      .select({
+        ...getTableColumns(orders),
+        ...(actor.identity === "staff" ? { customerName: customers.name } : {}),
+      })
+      .from(orders)
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .where(where)
+      .orderBy(order, desc(orders.id))
+      .limit(LIST_PAGE_SIZE)
+      .offset(page * LIST_PAGE_SIZE),
+    database()
+      .select({ total: count() })
+      .from(orders)
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .where(where),
+  ]);
+  return { rows, total: result.total, page, pageSize: LIST_PAGE_SIZE };
 }
 export async function getOrder(actor: Actor, id: string) {
   authorize(actor, "customer_operator");

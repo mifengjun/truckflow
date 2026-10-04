@@ -1,5 +1,17 @@
 import "server-only";
-import { eq, and, desc, sql, getTableColumns } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  asc,
+  desc,
+  sql,
+  ilike,
+  gte,
+  lte,
+  count,
+  getTableColumns,
+} from "drizzle-orm";
 import {
   inquiries,
   quotes,
@@ -8,6 +20,11 @@ import {
   customers,
 } from "@/infrastructure/database/schema";
 import { inquiryInput, quoteInput } from "./contracts";
+import {
+  LIST_PAGE_SIZE,
+  searchPattern,
+  type InquiryListQuery,
+} from "./listing";
 import {
   database,
   scope,
@@ -64,6 +81,67 @@ export async function listInquiries(actor: Actor, page = 0) {
     .orderBy(desc(inquiries.createdAt), desc(inquiries.id))
     .limit(20)
     .offset(page * 20);
+}
+export async function getInquiryPage(
+  actor: Actor,
+  page: number,
+  query: InquiryListQuery,
+) {
+  authorize(actor, "customer_operator");
+  const pattern = searchPattern(query.search);
+  const pickupDate = sql<string>`${inquiries.data}->>'pickupDate'`;
+  const where = and(
+    scope(actor, inquiries.customerId),
+    query.status ? eq(inquiries.status, query.status) : undefined,
+    query.from ? gte(pickupDate, query.from) : undefined,
+    query.to ? lte(pickupDate, query.to) : undefined,
+    query.search
+      ? or(
+          ilike(inquiries.number, pattern),
+          sql`concat_ws(' ', ${inquiries.data}->'origin'->>'city', ${inquiries.data}->'origin'->>'state', ${inquiries.data}->'destination'->>'city', ${inquiries.data}->'destination'->>'state', ${inquiries.data}->>'reference') ilike ${pattern}`,
+          actor.identity === "staff"
+            ? or(
+                ilike(customers.name, pattern),
+                ilike(customers.contact, pattern),
+              )
+            : undefined,
+        )
+      : undefined,
+  );
+  const columns = {
+    createdAt: inquiries.createdAt,
+    number: inquiries.number,
+    pickupDate,
+  };
+  const order =
+    query.direction === "asc"
+      ? asc(columns[query.sort])
+      : desc(columns[query.sort]);
+  const [rows, [result]] = await Promise.all([
+    database()
+      .select({
+        ...getTableColumns(inquiries),
+        ...(actor.identity === "staff"
+          ? {
+              customerName: customers.name,
+              customerContact: customers.contact,
+              customerSource: customers.source,
+            }
+          : {}),
+      })
+      .from(inquiries)
+      .innerJoin(customers, eq(inquiries.customerId, customers.id))
+      .where(where)
+      .orderBy(order, desc(inquiries.id))
+      .limit(LIST_PAGE_SIZE)
+      .offset(page * LIST_PAGE_SIZE),
+    database()
+      .select({ total: count() })
+      .from(inquiries)
+      .innerJoin(customers, eq(inquiries.customerId, customers.id))
+      .where(where),
+  ]);
+  return { rows, total: result.total, page, pageSize: LIST_PAGE_SIZE };
 }
 export async function getInquiry(actor: Actor, id: string) {
   authorize(actor, "customer_operator");

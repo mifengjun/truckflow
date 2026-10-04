@@ -36,8 +36,8 @@ export function Shipment({ data }: { data: InquiryInput }) {
         ))}
       </FieldGroup>
       <Separator className="business-rule" />
-      <div className="table-scroll">
-        <UiTable className="data-table">
+      <div className="rounded-md border">
+        <UiTable>
           <TableHeader>
             <TableRow>
               <TableHead>货物</TableHead>

@@ -25,6 +25,7 @@ export type Inquiry = {
   order: { id: string; number: string } | null;
 };
 export type Order = {
+  customerName?: string;
   id: string;
   number: string;
   customerId: string;
@@ -76,4 +77,11 @@ export type Customer = {
   email: string;
   phone: string;
   status: string;
+};
+
+export type ListPage<T> = {
+  rows: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 };

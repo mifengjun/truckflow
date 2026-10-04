@@ -20,7 +20,7 @@ export function AuthFrame({
   return (
     <main
       id="main-content"
-      className="mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-7 px-5 py-10"
+      className="production-auth mx-auto flex min-h-svh w-full max-w-lg flex-col justify-center gap-7 px-5 py-10"
     >
       <Link
         href="/"

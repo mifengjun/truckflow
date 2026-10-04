@@ -1,17 +1,18 @@
 "use client";
 import { BusinessSection } from "./shared";
+import Link from "next/link";
+import type { ColumnDef, CellContext } from "@tanstack/react-table";
+import { RecordTable } from "./RecordTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Field as UiField,
   FieldLabel,
   FieldGroup,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { TableRow, TableCell } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
@@ -24,11 +25,9 @@ import {
   api,
   Heading,
   Loading,
-  Table,
   TextLink,
   Status,
   Empty,
-  Pager,
   time,
   usd,
   ErrorNotice,
@@ -37,19 +36,84 @@ import {
 import type { Inquiry, Order } from "./types";
 import { Shipment } from "./Shipment";
 export function OrderList({ staff = false }: { staff?: boolean }) {
-  const [page, setPage] = useState(0),
-    [search, setSearch] = useState(""),
-    [status, setStatus] = useState(""),
-    q = useData<Order[]>(`orders?page=${page}`),
-    base = staff ? "/admin" : "/portal";
-  const rows = q.data?.filter(
-    (o) =>
-      (!status || o.status === status) &&
-      (!search ||
-        `${o.number} ${o.snapshot.carrier} ${o.externalId ?? ""}`
-          .toLowerCase()
-          .includes(search.toLowerCase())),
-  );
+  const base = staff ? "/admin" : "/portal";
+  const columns: ColumnDef<Order>[] = [
+    {
+      accessorKey: "number",
+      header: "订单号",
+      enableSorting: true,
+      enableHiding: false,
+      cell: ({ row }) => (
+        <Button variant="link" size="sm" asChild>
+          <Link href={`${base}/orders/${row.original.id}`}>
+            {row.original.number}
+          </Link>
+        </Button>
+      ),
+    },
+    ...(staff
+      ? [
+          {
+            id: "customer",
+            header: "客户",
+            cell: ({ row }: CellContext<Order, unknown>) =>
+              row.original.customerName ?? "—",
+          },
+        ]
+      : []),
+    {
+      id: "route",
+      header: "运输线路",
+      cell: ({ row }) => (
+        <span>
+          {row.original.snapshot.inquiry.origin.city},{" "}
+          {row.original.snapshot.inquiry.origin.state} →{" "}
+          {row.original.snapshot.inquiry.destination.city},{" "}
+          {row.original.snapshot.inquiry.destination.state}
+        </span>
+      ),
+    },
+    {
+      id: "pickupDate",
+      header: "提货日期",
+      enableSorting: true,
+      accessorFn: (order) => order.snapshot.inquiry.pickupDate,
+    },
+    {
+      id: "carrier",
+      header: "承运商",
+      accessorFn: (order) => order.snapshot.carrier,
+    },
+    {
+      accessorKey: "amount",
+      header: "金额 USD",
+      enableSorting: true,
+      cell: ({ row }) => (
+        <span className="tabular-nums">{usd(row.original.amount)}</span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "订单状态",
+      cell: ({ row }) => <Status value={row.original.status} />,
+    },
+    {
+      accessorKey: "fulfillment",
+      header: "运输进度",
+      cell: ({ row }) => <Status value={row.original.fulfillment} />,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "提交时间",
+      enableSorting: true,
+      cell: ({ row }) => time(row.original.createdAt),
+    },
+  ];
+  const createAction = !staff ? (
+    <Button asChild>
+      <Link href="/portal/inquiry">创建询价</Link>
+    </Button>
+  ) : undefined;
   return (
     <>
       <Heading
@@ -59,100 +123,35 @@ export function OrderList({ staff = false }: { staff?: boolean }) {
             ? "审核客户订单，记录承运商接单结果并更新运输进度。"
             : "跟踪订单进度，查看运输信息和运单文件。"
         }
-        action={
-          !staff && (
-            <Button asChild>
-              <TextLink href="/portal/inquiry">创建询价</TextLink>
-            </Button>
-          )
-        }
+        action={createAction}
       />
-      <BusinessSection title={<>订单记录</>}>
-        <div className="business-filters">
-          <UiField className="form-field">
-            <FieldLabel htmlFor="order-search">搜索本页订单</FieldLabel>
-            <Input
-              id="order-search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="订单号 / 承运商 / 承运商单号"
-            />
-          </UiField>
-          <UiField className="form-field">
-            <FieldLabel htmlFor="order-status">筛选本页状态</FieldLabel>
-            <NativeSelect
-              id="order-status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <NativeSelectOption value="">全部状态</NativeSelectOption>
-              {[
-                { id: "pending_review", text: "待审核" },
-                { id: "submitting", text: "正在下单" },
-                { id: "unknown", text: "结果待核实" },
-                { id: "accepted", text: "已接单" },
-                { id: "failed", text: "已拒单" },
-              ].map((s) => (
-                <NativeSelectOption key={s.id} value={s.id}>
-                  {s.text}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </UiField>
-        </div>
-        {!q.data ? (
-          <Loading error={q.error} retry={() => q.refetch()} />
-        ) : (
-          <>
-            <Table
-              head={[
-                "订单号",
-                "运输线路",
-                "承运商",
-                "金额 USD",
-                "订单状态",
-                "运输进度",
-                "操作",
-              ]}
-            >
-              {rows?.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell>{o.number}</TableCell>
-                  <TableCell>
-                    {o.snapshot.inquiry.origin.city} →{" "}
-                    {o.snapshot.inquiry.destination.city}
-                    <small className="muted" style={{ display: "block" }}>
-                      {o.snapshot.inquiry.pickupDate}
-                    </small>
-                  </TableCell>
-                  <TableCell>{o.snapshot.carrier}</TableCell>
-                  <TableCell>{usd(o.amount)}</TableCell>
-                  <TableCell>
-                    <Status value={o.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Status value={o.fulfillment} />
-                  </TableCell>
-                  <TableCell>
-                    <TextLink href={`${base}/orders/${o.id}`}>
-                      查看详情
-                    </TextLink>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </Table>
-            {!rows?.length && (
-              <Empty
-                text={
-                  q.data.length
-                    ? "本页暂无符合筛选条件的订单"
-                    : "暂无订单，先提交询价并选择报价"
-                }
-              />
-            )}
-            <Pager page={page} setPage={setPage} length={q.data.length} />
-          </>
-        )}
+      <BusinessSection
+        title="订单记录"
+        description="搜索和筛选覆盖全部可访问订单。点击订单号查看详情。"
+      >
+        <RecordTable
+          endpoint="orders"
+          columns={columns}
+          states={[
+            { id: "pending_review", text: "待审核" },
+            { id: "submitting", text: "正在下单" },
+            { id: "unknown", text: "结果待核实" },
+            { id: "accepted", text: "已接单" },
+            { id: "failed", text: "已拒单" },
+          ]}
+          searchPlaceholder={
+            staff
+              ? "订单号、承运商、线路或客户"
+              : "订单号、承运商、线路或跟踪号"
+          }
+          emptyTitle="暂无订单"
+          emptyDescription={
+            staff
+              ? "客户提交订单后，可在这里审核和跟进。"
+              : "提交询价并选择报价后，订单会显示在这里。"
+          }
+          emptyAction={createAction}
+        />
       </BusinessSection>
     </>
   );

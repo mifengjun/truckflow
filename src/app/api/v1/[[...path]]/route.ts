@@ -9,6 +9,11 @@ import * as Customers from "@/modules/business/customers";
 import * as Addresses from "@/modules/business/addresses";
 import * as Inquiry from "@/modules/business/inquiries";
 import * as Orders from "@/modules/business/orders";
+import {
+  orderListInput,
+  inquiryListInput,
+  listParameters,
+} from "@/modules/business/listing";
 import * as Finance from "@/modules/business/finance";
 import * as Invites from "@/modules/business/invitations";
 import * as Files from "@/modules/business/files";
@@ -222,7 +227,15 @@ async function handler(
     }
     if (p === "inquiries")
       return method === "GET"
-        ? reply(await Inquiry.listInquiries(actor, page))
+        ? reply(
+            url.searchParams.get("format") === "page"
+              ? await Inquiry.getInquiryPage(
+                  actor,
+                  page,
+                  inquiryListInput.parse(listParameters(url.searchParams)),
+                )
+              : await Inquiry.listInquiries(actor, page),
+          )
         : method === "POST"
           ? reply(
               await Inquiry.createInquiry(
@@ -250,7 +263,16 @@ async function handler(
     if (path[0] === "quotes" && path[2] === "publish" && method === "POST")
       return reply(await Inquiry.publishQuote(actor, uuid(path[1])));
     if (p === "orders") {
-      if (method === "GET") return reply(await Orders.listOrders(actor, page));
+      if (method === "GET")
+        return reply(
+          url.searchParams.get("format") === "page"
+            ? await Orders.getOrderPage(
+                actor,
+                page,
+                orderListInput.parse(listParameters(url.searchParams)),
+              )
+            : await Orders.listOrders(actor, page),
+        );
       if (method === "POST") {
         const d = z
           .object({ quoteId: z.uuid() })
