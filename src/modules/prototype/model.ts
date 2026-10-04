@@ -235,7 +235,7 @@ export function submitOrder(
   if (state.draft.mode !== "LTL")
     throw new Error("该运输方式尚未开放演示报价。");
   const order: PrototypeOrder = {
-    id: `TF-${now.toString(36).toUpperCase()}`,
+    id: `TF-${now.toString(36).toUpperCase()}-${state.orders.length + 1}`,
     intentId,
     draft: structuredClone(state.draft),
     quote: structuredClone(quote),

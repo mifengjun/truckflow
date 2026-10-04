@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
   PackageSearch,
@@ -166,46 +166,56 @@ export function Summary({
   draft: InquiryDraft;
   amount?: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
   return (
     <aside className="panel summary">
-      <h2>本次运输摘要</h2>
-      <AddressSummary draft={draft} />
-      <dl className="facts">
-        <div>
-          <dt>运输方式</dt>
-          <dd>{draft.mode} · 美国卡派</dd>
-        </div>
-        <div>
-          <dt>提货日期</dt>
-          <dd>{draft.date || "待填写"}</dd>
-        </div>
-        <div>
-          <dt>货物数量</dt>
-          <dd>
-            {draft.goods.reduce((n, g) => n + (Number(g.quantity) || 0), 0)} 件
-            / {draft.goods.length} 种
-          </dd>
-        </div>
-        <div>
-          <dt>货物总重</dt>
-          <dd>
-            {draft.goods.reduce((n, g) => n + (Number(g.weight) || 0), 0)} lb
-          </dd>
-        </div>
-        <div>
-          <dt>包装</dt>
-          <dd>{draft.pallets} 托盘</dd>
-        </div>
-      </dl>
-      {amount !== undefined && (
-        <div className="summary-total">
-          <span>报价总额 · USD</span>
-          <strong>{money(amount)}</strong>
-        </div>
-      )}
-      <p className="small muted">
-        运价与时效均为评审示例，服务范围待业务确认。
-      </p>
+      <h2 className="summary-desktop-title">本次运输摘要</h2>
+      <button
+        className="summary-toggle"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(!expanded)}
+      >
+        本次运输摘要 <span>{expanded ? "收起" : "展开"}</span>
+      </button>
+      <div className={`summary-content ${expanded ? "expanded" : ""}`}>
+        <AddressSummary draft={draft} />
+        <dl className="facts">
+          <div>
+            <dt>运输方式</dt>
+            <dd>{draft.mode} · 美国卡派</dd>
+          </div>
+          <div>
+            <dt>提货日期</dt>
+            <dd>{draft.date || "待填写"}</dd>
+          </div>
+          <div>
+            <dt>货物数量</dt>
+            <dd>
+              {draft.goods.reduce((n, g) => n + (Number(g.quantity) || 0), 0)}{" "}
+              件 / {draft.goods.length} 种
+            </dd>
+          </div>
+          <div>
+            <dt>货物总重</dt>
+            <dd>
+              {draft.goods.reduce((n, g) => n + (Number(g.weight) || 0), 0)} lb
+            </dd>
+          </div>
+          <div>
+            <dt>包装</dt>
+            <dd>{draft.pallets} 托盘</dd>
+          </div>
+        </dl>
+        {amount !== undefined && (
+          <div className="summary-total">
+            <span>报价总额 · USD</span>
+            <strong>{money(amount)}</strong>
+          </div>
+        )}
+        <p className="small muted">
+          运价与时效均为评审示例，服务范围待业务确认。
+        </p>
+      </div>
     </aside>
   );
 }

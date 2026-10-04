@@ -47,3 +47,9 @@ describe("订单意图和报价快照", () => {
     );
   });
 });
+it("同一毫秒的两个独立意图使用不同订单号", () => {
+  const s = quoted();
+  const a = submitOrder(s, s.quotes[0].id, "a", now);
+  const b = submitOrder(a, s.quotes[0].id, "b", now);
+  expect(b.orders[0].id).not.toBe(b.orders[1].id);
+});

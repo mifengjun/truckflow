@@ -257,6 +257,12 @@ export function Orders({ admin = false }: { admin?: boolean }) {
                         kind={admin ? "result" : "fulfillment"}
                       />
                     </div>
+                    {!admin && (
+                      <div className="mobile-result">
+                        <span>下单结果</span>
+                        <OrderStatus order={o} />
+                      </div>
+                    )}
                     <p>
                       {o.draft.origin.name} <span>→</span>{" "}
                       {o.draft.destination.name}

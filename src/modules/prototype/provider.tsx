@@ -18,7 +18,7 @@ import { loadState, STORAGE_KEY } from "./storage";
 import type { Scenario } from "./mock-adapter";
 type Context = {
   state: PrototypeState;
-  setState: (fn: (s: PrototypeState) => PrototypeState) => void;
+  setState: (fn: (s: PrototypeState) => PrototypeState) => PrototypeState;
   updateDraft: (draft: InquiryDraft) => void;
   scenario: Scenario;
   setScenario: (s: Scenario) => void;
@@ -27,22 +27,33 @@ type Context = {
 };
 const PrototypeContext = createContext<Context | null>(null);
 export function PrototypeProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState(createInitialState);
+  const [state, renderState] = useState(createInitialState);
+  const currentState = useRef(state);
+  const setState = useCallback(
+    (change: (s: PrototypeState) => PrototypeState) => {
+      const next = change(currentState.current);
+      currentState.current = next;
+      renderState(next);
+      return next;
+    },
+    [],
+  );
   const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const [scenario, setScenario] = useState<Scenario>("default");
   const [client] = useState(() => new QueryClient());
   const skipWrite = useRef(true);
+  // These effects hydrate and report failures from browser-only persistence.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       // Hydrate once after mount: the server cannot access this external store.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState(loadState(localStorage.getItem(STORAGE_KEY)));
+      setState(() => loadState(localStorage.getItem(STORAGE_KEY)));
     } catch {
       setStorageError(true);
     }
     setReady(true);
-  }, []);
+  }, [setState]);
   useEffect(() => {
     if (!ready) return;
     if (skipWrite.current) {
@@ -53,18 +64,21 @@ export function PrototypeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // Reflect a browser storage exception in the persistent warning.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStorageError(true);
     }
   }, [state, ready]);
-  const updateDraft = useCallback((draft: InquiryDraft) => {
-    setState((s) => ({
-      ...s,
-      draft: { ...draft, revision: s.draft.revision + 1 },
-    }));
-  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+  const updateDraft = useCallback(
+    (draft: InquiryDraft) => {
+      setState((s) => ({
+        ...s,
+        draft: { ...draft, revision: s.draft.revision + 1 },
+      }));
+    },
+    [setState],
+  );
   function reset() {
-    setState(createInitialState());
+    setState(createInitialState);
     setScenario("default");
     client.clear();
   }

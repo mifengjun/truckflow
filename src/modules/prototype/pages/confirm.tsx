@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useNow } from "../use-now";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
 import { usePrototype } from "../provider";
 import { money, services, submitOrder } from "../model";
@@ -22,6 +22,13 @@ export function Confirm() {
   const [error, setError] = useState("");
   const intent = useRef<string | null>(null);
   const lock = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const quote = state.quotes.find((q) => q.id === params.get("quote"));
   const valid =
     quote &&
@@ -35,10 +42,13 @@ export function Confirm() {
     intent.current ??= crypto.randomUUID();
     try {
       await new Promise((r) => setTimeout(r, 600));
+      if (!mounted.current) return;
       // This timestamp is captured by the submit event, never during render.
       // eslint-disable-next-line react-hooks/purity
-      const next = submitOrder(state, quote.id, intent.current, Date.now());
-      setState(() => next);
+      const timestamp = Date.now();
+      const next = setState((current) =>
+        submitOrder(current, quote.id, intent.current!, timestamp),
+      );
       router.push(
         `/prototype/portal/orders/${next.orders.find((o) => o.intentId === intent.current)!.id}`,
       );

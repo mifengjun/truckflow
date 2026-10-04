@@ -196,7 +196,7 @@ small,
 }
 .brand small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1.5px;
   font-weight: 400;
   margin-top: 7px;
@@ -212,7 +212,7 @@ small,
   border-radius: 10px;
 }
 .workspace-label {
-  font-size: 11px;
+  font-size: 12px;
   color: #6a7685;
   padding: 38px 12px 10px;
   letter-spacing: 1px;
@@ -256,7 +256,7 @@ small,
 }
 .support-note small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .status-dot {
@@ -276,7 +276,7 @@ small,
 }
 .account small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .account > svg {
@@ -336,7 +336,7 @@ small,
   margin-bottom: 26px;
 }
 .eyebrow {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1.5px;
   color: var(--muted);
   margin-bottom: 5px;
@@ -427,7 +427,7 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   padding: 3px 8px;
   border-radius: 4px;
@@ -598,7 +598,7 @@ textarea::placeholder {
 .summary .route-summary {
   display: block;
 }
-.summary .route-summary > div + div {
+.summary .route-summary > div:last-child {
   margin-top: 22px;
 }
 .summary .route-arrow {
@@ -645,7 +645,7 @@ textarea::placeholder {
   margin-top: 4px;
 }
 footer {
-  font-size: 10px;
+  font-size: 12px;
   color: #677487;
   padding: 14px 32px;
   display: flex;
@@ -691,13 +691,13 @@ footer {
     flex-wrap: wrap;
   }
   .review-label {
-    font-size: 11px;
+    font-size: 12px;
   }
   .review-link {
-    font-size: 11px;
+    font-size: 12px;
   }
   .review-controls select {
-    font-size: 11px;
+    font-size: 12px;
     max-width: 122px;
   }
   .role-switch a {
@@ -779,7 +779,7 @@ footer {
   .review-link {
     min-height: 28px;
   }
-  .summary .route-summary > div + div {
+  .summary .route-summary > div:last-child {
     margin-top: 22px;
   }
 }
@@ -831,7 +831,7 @@ footer {
   height: 28px;
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 12px;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -857,7 +857,7 @@ footer {
   border-color: #dce5fb;
 }
 .autosave {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-bottom: 14px;
 }
@@ -870,7 +870,7 @@ footer {
   color: #738197;
 }
 .section-number {
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: #758195;
 }
@@ -901,7 +901,7 @@ footer {
 }
 .field-hint {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 5px;
 }
 [aria-invalid="true"] {
@@ -921,7 +921,7 @@ footer {
   margin: 0;
 }
 .goods-item legend {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--primary);
   font-weight: 600;
   padding: 0 10px 0 0;
@@ -932,7 +932,7 @@ footer {
   justify-content: space-between;
   margin: 8px 0 12px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .checkbox-row {
   display: flex;
@@ -972,7 +972,7 @@ footer {
 }
 .service-option small {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 3px;
 }
@@ -1050,14 +1050,14 @@ footer {
 .carrier p,
 .quote-time > span,
 .quote-price > span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
   margin-top: 4px;
 }
 .quote-time small,
 .quote-price small {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
 }
@@ -1087,7 +1087,7 @@ footer {
   cursor: pointer;
 }
 .quote summary span {
-  font-size: 11px;
+  font-size: 12px;
   color: #687586;
   margin-left: 14px;
 }
@@ -1119,7 +1119,7 @@ footer {
   font-size: 20px;
 }
 .footnote {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 22px;
 }
@@ -1181,7 +1181,7 @@ footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
-  .summary .route-summary > div + div {
+  .summary .route-summary > div:last-child {
     margin-top: 0;
   }
   .steps {
@@ -1191,7 +1191,7 @@ footer {
     display: none;
   }
   .steps > div {
-    font-size: 11px;
+    font-size: 12px;
     gap: 6px;
   }
   .steps > div:last-child {
@@ -1221,7 +1221,7 @@ footer {
   .summary .route-summary {
     display: block;
   }
-  .summary .route-summary > div + div {
+  .summary .route-summary > div:last-child {
     margin-top: 20px;
   }
   .service-grid {
@@ -1295,7 +1295,7 @@ footer {
   border-radius: 4px;
   padding: 0 5px;
   background: #f0f3f7;
-  font-size: 10px;
+  font-size: 12px;
   color: #66768b;
 }
 .filter-tabs button[aria-pressed="true"] span {
@@ -1352,7 +1352,7 @@ footer {
   border-top: 1px solid var(--line);
   padding: 12px 16px;
   color: #637187;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -1384,7 +1384,7 @@ footer {
 .order-id small,
 .cell-sub {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -1393,7 +1393,7 @@ footer {
   overflow-wrap: anywhere;
 }
 .table-route {
-  font-size: 11px;
+  font-size: 12px;
   min-width: 125px;
 }
 .table-route span {
@@ -1417,7 +1417,7 @@ footer {
   display: block;
   margin-top: 3px;
   color: #69768a;
-  font-size: 10px;
+  font-size: 12px;
 }
 .status-stack {
   display: grid;
@@ -1425,7 +1425,7 @@ footer {
   justify-items: start;
 }
 .status-stack > small {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .table-money {
@@ -1449,7 +1449,7 @@ footer {
   border-top: 1px solid var(--line);
   padding: 16px 24px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .table-pagination > div {
   display: flex;
@@ -1465,7 +1465,7 @@ footer {
   justify-content: space-between;
   margin-top: 14px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .mobile-orders {
   display: none;
@@ -1503,7 +1503,7 @@ footer {
   align-items: center;
   gap: 8px;
   margin-top: 9px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .shipment-progress {
   list-style: none;
@@ -1517,7 +1517,7 @@ footer {
   display: flex;
   align-items: center;
   flex-direction: column;
-  font-size: 11px;
+  font-size: 12px;
   color: #758193;
   gap: 8px;
 }
@@ -1541,7 +1541,7 @@ footer {
   place-items: center;
   background: #f3f5f8;
   border: 1px solid #dae1ec;
-  font-size: 10px;
+  font-size: 12px;
   z-index: 1;
 }
 .shipment-progress li.done {
@@ -1599,14 +1599,14 @@ footer {
 }
 .attachment-list small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .attachment-pending {
   display: flex;
   gap: 4px;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .fee-note {
@@ -1635,7 +1635,7 @@ footer {
   padding-top: 14px;
   margin-top: 20px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .assumption summary {
   cursor: pointer;
@@ -1690,7 +1690,7 @@ footer {
 }
 .timeline small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -1780,7 +1780,7 @@ footer {
   }
   .table-pagination {
     padding: 16px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .table-pagination .button {
     min-width: 36px;
@@ -1820,13 +1820,13 @@ footer {
     margin: 0 10px;
   }
   .mobile-order small {
-    font-size: 10px;
+    font-size: 12px;
     color: var(--muted);
   }
   .list-caption {
     flex-direction: column;
     gap: 6px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .detail-layout > aside {
     display: flex;
@@ -1839,7 +1839,7 @@ footer {
     flex-wrap: wrap;
   }
   .shipment-progress li {
-    font-size: 10px;
+    font-size: 12px;
   }
   .detail-layout {
     gap: 20px;
@@ -1908,7 +1908,7 @@ footer {
   font-weight: 550;
 }
 .catalog-grid small {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
   margin-top: 3px;
@@ -1929,12 +1929,12 @@ footer {
   margin-top: 3px;
 }
 .scope-note strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .scope-note p {
   margin-top: 5px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .balance-strip {
   display: grid;
@@ -1965,7 +1965,7 @@ footer {
 }
 .balance-strip span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .structure-panel {
   padding: 0;
@@ -1997,7 +1997,7 @@ footer {
   min-width: 0;
 }
 .ticket-body small {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .ticket-body h3 {
@@ -2005,7 +2005,7 @@ footer {
   margin-top: 4px;
 }
 .ticket-body p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -2057,7 +2057,7 @@ footer {
   gap: 10px;
 }
 .address-bottom > span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .permission-list {
@@ -2229,7 +2229,7 @@ footer {
     flex-wrap: wrap;
   }
   .catalog-grid small {
-    font-size: 10px;
+    font-size: 12px;
   }
   .catalog-grid .badge {
     margin-left: 38px;
@@ -2301,12 +2301,67 @@ footer {
     padding: 24px;
   }
   .scope-note {
-    font-size: 11px;
+    font-size: 12px;
   }
   .report-bars > div {
     gap: 12px;
   }
   .panel-header {
     flex-wrap: wrap;
+  }
+}
+
+.summary-toggle {
+  display: none;
+}
+.summary-content > .small {
+  margin-top: 20px;
+}
+h1 {
+  overflow-wrap: anywhere;
+}
+.mobile-result {
+  justify-content: flex-start !important;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .summary-desktop-title {
+    display: none;
+  }
+  .summary-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    border: 0;
+    background: none;
+    padding: 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 44px;
+  }
+  .summary-toggle span {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 400;
+  }
+  .summary-content {
+    display: none;
+  }
+  .summary-content.expanded {
+    display: block;
+    padding-top: 20px;
+  }
+  .review-controls {
+    gap: 10px 12px;
+  }
+  .review-toolbar .review-link,
+  .review-toolbar select,
+  .role-switch a {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
   }
 }
